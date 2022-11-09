@@ -19,6 +19,7 @@
   "scripts": {
     "compile": "tsc",
     "start": "ts-node ./start.ts",
+    "test": "jest test --config ./jest.config.js",
     "upgrade-deps": "npm-upgrade"
   },
   "dependencies": {
