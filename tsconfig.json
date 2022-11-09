@@ -1,0 +1,38 @@
+// https://typestrong.org/ts-node/docs/configuration/
+{
+  "extends": "ts-node/node16/tsconfig.json",
+  "ts-node": {
+    "files": true,
+    "compilerOptions": {
+      "module": "commonjs"
+    }
+  },
+  "compilerOptions": {
+    "module": "commonjs",
+    "declaration": false,
+    "noImplicitAny": false,
+    "noUnusedLocals": false,
+    "removeComments": true,
+    "noLib": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "useUnknownInCatchVariables": false,
+    "target": "es6",
+    "sourceMap": true,
+    "allowJs": true,
+    "outDir": "dist",
+    "lib": ["es7"],
+    "paths": {
+      "@types": ["./types"]
+    }
+    // "types": ["node"],
+    // "typeRoots": ["./node_modules/@types", "./types", "./lib/types"],
+    // "rootDirs": ["lib", "config", "types"],
+    // "baseUrl": ".",
+    // "paths": {
+    //   "*": ["*", "components/*"]
+    // }
+  },
+  "include": ["*.ts", "*.d.ts", "lib/**/*", "config/**/*", "hooks/**/*", "types/**/*"],
+  "exclude": ["node_modules", "test/**/*"]
+}
