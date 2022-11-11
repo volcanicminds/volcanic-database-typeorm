@@ -24,3 +24,7 @@ yarn add @volcanicminds/typeorm
 ```js
 yarn upgrade-deps
 ```
+
+## Postgres
+
+https://github.com/typeorm/typeorm/blob/master/test/functional/database-schema/column-types/postgres/entity/Post.ts
