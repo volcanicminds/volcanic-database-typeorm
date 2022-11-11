@@ -29,6 +29,9 @@ yarn upgrade-deps
 
 [typeorm postgres: database schema / column types](https://github.com/typeorm/typeorm/blob/master/test/functional/database-schema/column-types/postgres/entity/Post.ts)
 
+[postgres data types: all](https://www.postgresql.org/docs/current/datatype.html)
+[postgres data types: numeric](https://www.postgresql.org/docs/current/datatype-numeric.html)
+
 ## Entities
 
 For example, under `/src/entities` create the following:
