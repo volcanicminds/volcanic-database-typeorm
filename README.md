@@ -25,6 +25,39 @@ yarn add @volcanicminds/typeorm
 yarn upgrade-deps
 ```
 
-## Postgres
+## Postgres (data types)
 
-https://github.com/typeorm/typeorm/blob/master/test/functional/database-schema/column-types/postgres/entity/Post.ts
+[typeorm postgres: database schema / column types](https://github.com/typeorm/typeorm/blob/master/test/functional/database-schema/column-types/postgres/entity/Post.ts)
+
+## Entities
+
+For example, under `/src/entities` create the following:
+
+```ts
+// player.e.ts
+
+import { Entity, Column, Index, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm'
+
+@Entity()
+class Player {
+  @PrimaryGeneratedColumn()
+  id: number
+
+  @Index()
+  @Column() // default: nullable false
+  name: string
+
+  @Column({ type: 'varchar', array: true, nullable: true })
+  roles: string[]
+
+  @CreateDateColumn()
+  createdAt: Date
+
+  @UpdateDateColumn()
+  updatedAt: Date
+}
+
+module.exports = Player
+```
+
+For more info and possibilities see [typeorm decorators](https://typeorm.io/decorator-reference)
