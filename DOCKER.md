@@ -20,6 +20,7 @@ docker pull dpage/pgadmin4:latest
 
 docker run --name pgadmin-vminds -p 5051:80 -e "PGADMIN_DEFAULT_EMAIL=developers@volcanicminds.com" -e "PGADMIN_DEFAULT_PASSWORD=vminds" -d dpage/pgadmin4
 
-
+# pgAdmin4: connect pgsql using correct IP read from inspect (retrieve your ID by docker ps)
+docker inspect 6f14e1fa0702 | grep IPAddress
 
 ```
