@@ -15,21 +15,34 @@ async function start(options) {
         password: 'vminds',
         database: 'vminds',
         synchronize: true,
-        logging: true
-        // entities: []
-        // subscribers: [],
-        // migrations: []
+        logging: true, // query, error, schema, warn, info, all
+        logger: '' // advanced-console, simple-console
       }
-      console.log('options ' + JSON.stringify(options))
     }
 
     if (options == null || Object.keys(options).length == 0) {
       throw Error('Volcanic Database: options not specified')
     }
 
-    // load all entities & classes
+    const { LOG_DB_LEVEL = process.env.LOG_LEVEL || 'trace', LOG_COLORIZE = true } = process.env
+
+    const logLevel: string | boolean =
+      LOG_DB_LEVEL === 'trace'
+        ? 'all'
+        : LOG_DB_LEVEL === 'debug'
+        ? 'query'
+        : LOG_DB_LEVEL === 'info'
+        ? 'info'
+        : LOG_DB_LEVEL === 'warn'
+        ? 'warn'
+        : LOG_DB_LEVEL === 'error'
+        ? 'error'
+        : false
+
     const { classes, repositories, entities } = loaderEntities.load()
     options.entities = [...(options.entities || []), ...(entities || [])]
+    options.logger = LOG_COLORIZE ? 'advanced-console' : 'simple-console'
+    options.logging = logLevel
 
     new DataSource(options)
       .initialize()
@@ -45,10 +58,7 @@ async function start(options) {
 
         return resolve(ds)
       })
-      .catch((error) => {
-        console.log(error)
-        reject(error)
-      })
+      .catch((error) => reject(error))
   })
 }
 

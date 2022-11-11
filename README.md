@@ -1,7 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![opensource](https://img.shields.io/badge/open-source-blue)](https://en.wikipedia.org/wiki/Open_source)
 [![volcanic-backend](https://img.shields.io/badge/volcanic-minds-orange)](https://github.com/volcanicminds/volcanic-backend)
-[![npm](https://img.shields.io/badge/package-npm-white)](https://www.npmjs.com/package/@volcanicminds/backend)
+[![npm](https://img.shields.io/badge/package-npm-white)](https://www.npmjs.com/package/@volcanicminds/typeorm)
 
 # volcanic-database-typeorm
 
@@ -64,3 +64,20 @@ module.exports = Player
 ```
 
 For more info and possibilities see [typeorm decorators](https://typeorm.io/decorator-reference)
+
+## Enviroment
+
+```rb
+# or automatically use LOG_LEVEL
+LOG_DB_LEVEL=warn
+LOG_COLORIZE=true
+```
+
+Log levels:
+
+- **trace**: useful and useless messages, verbose mode
+- **debug**: well, for debugging purposes.. you know what I mean
+- **info**: minimal logs necessary for understand that everything is working fine
+- **warn**: useful warnings if the environment is controlled
+- **error**: print out errors even if not blocking/fatal errors
+- **fatal**: ok you are dead now, but you want to know
