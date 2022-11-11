@@ -17,6 +17,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "useUnknownInCatchVariables": false,
+    "strictPropertyInitialization": false,
     "target": "es6",
     "sourceMap": true,
     "allowJs": true,
