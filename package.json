@@ -23,6 +23,7 @@
     "upgrade-deps": "npm-upgrade"
   },
   "dependencies": {
+    "pluralize": "^8.0.0",
     "reflect-metadata": "^0.1.13",
     "typeorm": "^0.3.10"
   },
