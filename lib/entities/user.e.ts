@@ -1,7 +1,7 @@
 import { Entity, Column, Index, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 
 @Entity()
-class User {
+export class User {
   @PrimaryGeneratedColumn()
   id: number
 
@@ -18,5 +18,3 @@ class User {
   @UpdateDateColumn()
   updatedAt: Date
 }
-
-module.exports = User

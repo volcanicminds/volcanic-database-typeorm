@@ -43,6 +43,11 @@ async function start(options) {
     options.entities = [...(options.entities || []), ...(entities || [])]
     options.logger = LOG_COLORIZE ? 'advanced-console' : 'simple-console'
     options.logging = logLevel
+    // options.entities = [
+    //   ...(options.entities || []),
+    //   `${__dirname}/../entities/*.e.{ts,js}`,
+    //   `${process.cwd()}/src/entities/*.e.{ts,js}`
+    // ]
 
     new DataSource(options)
       .initialize()
