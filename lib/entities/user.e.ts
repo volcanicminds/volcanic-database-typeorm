@@ -9,6 +9,10 @@ export class User {
   @Column()
   name: string
 
+  @Index()
+  @Column()
+  email: string
+
   @Column({ type: 'varchar', array: true, nullable: true })
   roles: string[]
 
