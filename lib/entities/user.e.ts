@@ -13,6 +13,9 @@ export class User {
   @Column()
   email: string
 
+  @Column()
+  password: string
+
   @Column({ type: 'varchar', array: true, nullable: true })
   roles: string[]
 
