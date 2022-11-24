@@ -9,7 +9,8 @@
   },
   "compilerOptions": {
     "module": "commonjs",
-    "declaration": false,
+    "moduleResolution": "node",
+    "declaration": true,
     "noImplicitAny": false,
     "noUnusedLocals": false,
     "removeComments": true,
@@ -20,12 +21,13 @@
     "strictPropertyInitialization": false,
     "target": "es6",
     "sourceMap": true,
+    "strict": true,
     "allowJs": true,
     "outDir": "dist",
-    "lib": ["es7"],
-    "paths": {
-      "@types": ["./types"]
-    }
+    "lib": ["es7"]
+    // "paths": {
+    //   "@types": ["./types"]
+    // }
     // "types": ["node"],
     // "typeRoots": ["./node_modules/@types", "./types", "./lib/types"],
     // "rootDirs": ["lib", "config", "types"],
@@ -34,6 +36,6 @@
     //   "*": ["*", "components/*"]
     // }
   },
-  "include": ["*.ts", "*.d.ts", "lib/**/*", "config/**/*", "hooks/**/*", "types/**/*"],
+  "include": ["*.ts", "*.d.ts", "lib/**/*"],
   "exclude": ["node_modules", "test/**/*"]
 }

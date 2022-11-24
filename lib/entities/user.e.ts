@@ -1,13 +1,41 @@
-import { Entity, Column, Index, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm'
+import {
+  Entity,
+  Column,
+  TableInheritance,
+  Index,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  DeleteDateColumn,
+  VersionColumn
+} from 'typeorm'
+
+export class ExtraColumns {
+  @VersionColumn()
+  version: number
+
+  @CreateDateColumn()
+  createdAt: Date
+
+  @UpdateDateColumn()
+  updatedAt: Date
+
+  @DeleteDateColumn()
+  deletedAt: Date
+}
 
 @Entity()
+@TableInheritance({ column: { type: 'varchar', name: 'type', default: 'user' } })
 export class User {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: number
+
+  @Column(() => ExtraColumns)
+  extra: ExtraColumns
 
   @Index()
   @Column()
-  name: string
+  name: string // username
 
   @Index()
   @Column()
@@ -16,12 +44,6 @@ export class User {
   @Column()
   password: string
 
-  @Column({ type: 'varchar', array: true, nullable: true })
-  roles: string[]
-
-  @CreateDateColumn()
-  createdAt: Date
-
-  @UpdateDateColumn()
-  updatedAt: Date
+  @Column({ type: 'simple-array', nullable: true })
+  allRoles: string[]
 }

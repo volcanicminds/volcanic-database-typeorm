@@ -3,6 +3,7 @@
 import 'reflect-metadata'
 import { DataSource } from 'typeorm'
 import * as loaderEntities from './lib/loader/entities'
+import { User, ExtraColumns } from './lib/entities/user.e'
 
 async function start(options) {
   return new Promise<DataSource>((resolve, reject) => {
@@ -43,6 +44,7 @@ async function start(options) {
     options.entities = [...(options.entities || []), ...(entities || [])]
     options.logger = LOG_COLORIZE ? 'advanced-console' : 'simple-console'
     options.logging = logLevel
+
     // options.entities = [
     //   ...(options.entities || []),
     //   `${__dirname}/../entities/*.e.{ts,js}`,
@@ -56,17 +58,13 @@ async function start(options) {
         const repository = {}
         Object.keys(repositories).map((r) => (repository[r] = ds.getRepository(repositories[r])))
 
-        global.database = {
-          model: classes,
-          repository: repository
-        }
-
+        global.entity = classes
+        global.repository = repository
         return resolve(ds)
       })
       .catch((error) => reject(error))
   })
 }
 
-module.exports = start
-module.exports.server = start
-module.exports.default = start
+export { User, ExtraColumns }
+module.exports = { start, User, ExtraColumns }

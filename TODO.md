@@ -1,7 +1,12 @@
 # TODO
 
-- loading entities
-- expose entities to global
-- expose repo (controller) to global
-- pass options by config file or structure
-- test if is possibile to avoid add package pg here (let choose on the top project)
+## Useful links
+
+https://github.com/typeorm/typeorm/tree/master/docs
+https://github.com/typeorm/typeorm/blob/master/docs/decorator-reference.md
+https://github.com/typeorm/typeorm/blob/master/docs/embedded-entities.md
+
+https://progressivecoder.com/how-to-implement-typeorm-entity-inheritance/
+https://github.com/typeorm/typeorm/issues/8437
+
+https://github.com/cmdcolin/npm-package-tutorial/blob/master/package.json
