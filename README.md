@@ -43,7 +43,7 @@ import { Entity, Column, Index, PrimaryGeneratedColumn, CreateDateColumn, Update
 
 @Entity()
 class Player {
-  @PrimaryGeneratedColumn()
+  @PrimaryGeneratedColumn('uuid')
   id: number
 
   @Index()
