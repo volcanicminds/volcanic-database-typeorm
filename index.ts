@@ -58,6 +58,7 @@ async function start(options) {
         const repository = {}
         Object.keys(repositories).map((r) => (repository[r] = ds.getRepository(repositories[r])))
 
+        global.connection = ds
         global.entity = classes
         global.repository = repository
         return resolve(ds)
