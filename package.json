@@ -28,7 +28,8 @@
     "test": "jest test --config ./jest.config.js",
     "build:esm": "tsc --target es2018 --outDir esm",
     "build:cjs": "tsc --target es2015 --module commonjs --outDir dist",
-    "build": "npm run build:esm && npm run build:cjs"
+    "build": "npm run build:esm && npm run build:cjs",
+    "compile": "npm run build"
   },
   "dependencies": {
     "pluralize": "^8.0.0",
