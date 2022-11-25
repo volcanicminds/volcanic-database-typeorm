@@ -7,7 +7,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
-  VersionColumn
+  VersionColumn,
+  BaseEntity
 } from 'typeorm'
 
 export class ExtraColumns {
@@ -26,7 +27,7 @@ export class ExtraColumns {
 
 @Entity()
 @TableInheritance({ column: { type: 'varchar', name: 'type', default: 'user' } })
-export class User {
+export class User extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: number
 
