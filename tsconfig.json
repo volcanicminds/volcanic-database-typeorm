@@ -24,10 +24,10 @@
     "strict": true,
     "allowJs": true,
     "outDir": "dist",
-    "lib": ["es7"]
-    // "paths": {
-    //   "@types": ["./types"]
-    // }
+    "lib": ["es7"],
+    "paths": {
+      "@types": ["./types"]
+    }
     // "types": ["node"],
     // "typeRoots": ["./node_modules/@types", "./types", "./lib/types"],
     // "rootDirs": ["lib", "config", "types"],
@@ -36,6 +36,6 @@
     //   "*": ["*", "components/*"]
     // }
   },
-  "include": ["*.ts", "*.d.ts", "lib/**/*"],
+  "include": ["*.ts", "*.d.ts", "lib/**/*", "types/*"],
   "exclude": ["node_modules", "test/**/*"]
 }

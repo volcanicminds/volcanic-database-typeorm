@@ -3,7 +3,8 @@
 import 'reflect-metadata'
 import { DataSource } from 'typeorm'
 import * as loaderEntities from './lib/loader/entities'
-import { User, ExtraColumns } from './lib/entities/user.e'
+import * as userManager from './lib/loader/userManager'
+import { User } from './lib/entities/user.e'
 
 async function start(options) {
   return new Promise<DataSource>((resolve, reject) => {
@@ -47,7 +48,7 @@ async function start(options) {
 
     // options.entities = [
     //   ...(options.entities || []),
-    //   `${__dirname}/../entities/*.e.{ts,js}`,
+    //   `${__dirname}/lib/entities/*.e.{ts,js}`,
     //   `${process.cwd()}/src/entities/*.e.{ts,js}`
     // ]
 
@@ -67,5 +68,6 @@ async function start(options) {
   })
 }
 
-export { User, ExtraColumns }
-module.exports = { start, User, ExtraColumns }
+export { Database } from './types/global'
+export { User, userManager }
+module.exports = { start, User, userManager }
