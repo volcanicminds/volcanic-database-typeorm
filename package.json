@@ -1,6 +1,6 @@
 {
   "name": "@volcanicminds/typeorm",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "license": "MIT",
   "description": "TypeORM for the volcanic (minds) backend",
   "keywords": [
@@ -32,6 +32,7 @@
     "compile": "npm run build"
   },
   "dependencies": {
+    "bcrypt": "^5.1.0",
     "pluralize": "^8.0.0",
     "reflect-metadata": "^0.1.13",
     "typeorm": "^0.3.10"
