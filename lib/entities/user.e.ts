@@ -3,6 +3,7 @@ import {
   Column,
   TableInheritance,
   Index,
+  Unique,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
@@ -11,7 +12,28 @@ import {
   BaseEntity
 } from 'typeorm'
 
-export class ExtraColumns {
+@Entity()
+@Unique(['username'])
+@Unique(['email'])
+@TableInheritance({ column: { type: 'varchar', name: 'type', default: 'user' } })
+export class User extends BaseEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: number
+
+  @Index()
+  @Column()
+  username: string
+
+  @Index()
+  @Column()
+  email: string
+
+  @Column()
+  password: string
+
+  @Column({ type: 'simple-array', nullable: true })
+  roles: string[]
+
   @VersionColumn()
   version: number
 
@@ -23,28 +45,4 @@ export class ExtraColumns {
 
   @DeleteDateColumn()
   deletedAt: Date
-}
-
-@Entity()
-@TableInheritance({ column: { type: 'varchar', name: 'type', default: 'user' } })
-export class User extends BaseEntity {
-  @PrimaryGeneratedColumn('uuid')
-  id: number
-
-  @Column(() => ExtraColumns)
-  extra: ExtraColumns
-
-  @Index()
-  @Column()
-  name: string // username
-
-  @Index()
-  @Column()
-  email: string
-
-  @Column()
-  password: string
-
-  @Column({ type: 'simple-array', nullable: true })
-  allRoles: string[]
 }
