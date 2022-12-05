@@ -103,3 +103,6 @@ esm
 
 # TernJS port file
 .tern-port
+
+# Auto uploaded data for the container
+data
