@@ -7,7 +7,7 @@ docker pull postgres:latest
 docker run -itd -e POSTGRES_USER=vminds -e POSTGRES_PASSWORD=vminds -p 5432:5432 --name postgresql postgres
 
 # with data mount
-docker run -itd -e POSTGRES_USER=vminds -e POSTGRES_PASSWORD=vminds -p 5432:5432 -v /data:/var/lib/postgresql/data --name postgresql postgres
+docker run -itd -e POSTGRES_USER=vminds -e POSTGRES_PASSWORD=vminds -p 5432:5432 -v ${PWD}/data:/var/lib/postgresql/data --name postgresql postgres
 
 
 ```
