@@ -1,5 +1,7 @@
 # TODO
 
+- readme aggiungere sezioni su come usare il plugin e progetto esempio
+
 ## Useful links
 
 https://github.com/typeorm/typeorm/tree/master/docs
