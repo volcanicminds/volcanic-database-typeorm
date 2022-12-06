@@ -7,8 +7,6 @@
 
 ## Based on
 
-Based on [Fastify](https://www.fastify.io) ([GitHub](https://github.com/fastify/fastify)).
-
 Based on [TypeORM](https://www.typeorm.io) ([GitHub](https://github.com/typeorm/typeorm)).
 
 And, what you see in [package.json](package.json).
