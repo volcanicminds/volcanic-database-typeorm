@@ -1,10 +1,6 @@
 # TODO
 
 - readme aggiungere sezioni su come usare il plugin e progetto esempio
-- disabilitazione bici (logica)
-- elenco bicicletta di default ordinato per data inserimento DESC e presa in carico attiva
-- elenco clienti ordinabili per nome ecc
-- ownership workshop su entità customer/bici/ordini ecc: tutte le route che passano da workshop (bearer token / ruolo) filtrano i dati di risposta
 
 ## Useful links
 
