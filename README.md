@@ -115,3 +115,7 @@ It's possible use some operators:
 The expression `field=value` is equals to `field:eq=value`
 
 **Pay attention**: Some datatypes, like UUID, are special types and have possibility to use only specific operator (for example: eq, null, notNull, ..)
+
+## Logging
+
+Use Pino logger if in your project you have a `global.log` with a valid instance.

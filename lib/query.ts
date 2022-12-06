@@ -12,6 +12,8 @@ import {
   LessThanOrEqual
 } from 'typeorm'
 
+import * as log from './util/logger'
+
 export function applyQuery(data) {
   const { page = 0, pageSize = 0, skip: sk = 0, take: tk = 0, sort: s, ...where } = data
   const take: number = tk || pageSize || 50
@@ -89,14 +91,12 @@ export function applyQuery(data) {
       let value = where[objectPath]
 
       // Set value at end of path
-      console.log('EVALUATE FIELD')
-      console.log('regexp: ' + JSON.stringify(m))
-      console.log('target: ' + JSON.stringify(target))
-      console.log('fieldName: ' + fieldName)
-      console.log('operator: ' + operator)
-      console.log('value: ' + value)
-      console.log('parts[0]: ' + JSON.stringify(parts[0]))
-      console.log('where[' + objectPath + ']: ' + JSON.stringify(where[objectPath]))
+      // log.debug('EVALUATE FIELD')
+      // log.debug('regexp: ' + JSON.stringify(m))
+      // log.debug('target: ' + JSON.stringify(target))
+      log.debug('fieldName: ' + fieldName + ' with path: ' + objectPath)
+      log.debug('operator: ' + operator + ' on value: ' + value)
+      // log.debug('parts[0]: ' + JSON.stringify(parts[0]))
 
       if (operator) {
         value = reservedOperators[operator](value)
@@ -121,8 +121,7 @@ export function applyQuery(data) {
   if (order) query.order = useOrder(order)
   if (where) query.where = useWhere(where)
 
-  console.log('FINAL WHERE: ' + JSON.stringify(query.where))
-
+  log.debug('FINAL WHERE: ' + JSON.stringify(query.where))
   return query
 }
 
