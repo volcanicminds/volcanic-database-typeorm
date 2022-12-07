@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm'
 import * as loaderEntities from './lib/loader/entities'
 import * as userManager from './lib/loader/userManager'
 import { User } from './lib/entities/user.e'
-import { applyQuery, executeCountQuery, executeFindQuery } from './lib/query'
+import { applyQuery, executeCountQuery, executeFindQuery, useOrder, useWhere } from './lib/query'
 
 async function start(options) {
   return new Promise<DataSource>((resolve, reject) => {
@@ -71,5 +71,5 @@ async function start(options) {
 }
 
 export { Database } from './types/global'
-export { User, userManager, DataSource, applyQuery, executeCountQuery, executeFindQuery }
-module.exports = { start, User, userManager, applyQuery, executeCountQuery, executeFindQuery }
+export { User, userManager, DataSource, applyQuery, executeCountQuery, executeFindQuery, useOrder, useWhere }
+module.exports = { start, User, userManager, applyQuery, executeCountQuery, executeFindQuery, useOrder, useWhere }

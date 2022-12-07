@@ -16,7 +16,7 @@ import * as log from './util/logger'
 
 const evalOrder = (val: string = '') => (['desc', 'd', 'false', '1'].includes(val.toLowerCase()) ? 'desc' : 'asc')
 
-const useOrder = (order: string[] = []) => {
+export const useOrder = (order: string[] = []) => {
   const orderBy = {}
   order
     .filter((o) => !!o)
@@ -28,7 +28,7 @@ const useOrder = (order: string[] = []) => {
   return orderBy
 }
 
-const useWhere = (where: any) => {
+export const useWhere = (where: any) => {
   const result = {}
 
   const val = (v) => v || 'notFound'
