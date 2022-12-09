@@ -29,7 +29,8 @@
     "build:esm": "tsc --target es2018 --outDir esm",
     "build:cjs": "tsc --target es2015 --module commonjs --outDir dist",
     "build": "npm run build:esm && npm run build:cjs",
-    "compile": "npm run build"
+    "compile": "npm run build",
+    "reset": "yarn && yarn upgrade && yarn compile"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",
