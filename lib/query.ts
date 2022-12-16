@@ -129,7 +129,7 @@ export function applyQuery(data, extraWhere) {
   // merge extraWhere and where
   query.where = Array.isArray(extra) ? extra.map((w) => ({ ...w, ...query.where })) : { ...extra, ...query.where }
 
-  log.debug('FINAL WHERE: ' + JSON.stringify(query.where))
+  // log.debug('FINAL WHERE: ' + JSON.stringify(query.where))
   return query
 }
 
