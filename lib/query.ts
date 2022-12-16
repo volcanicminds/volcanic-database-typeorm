@@ -105,7 +105,7 @@ export const useWhere = (where: any) => {
 
 export function applyQuery(data, extraWhere) {
   const { page = 1, pageSize = 0, skip: sk = 0, take: tk = 0, sort: s, ...where } = data
-  const take: number = tk || pageSize || 50
+  const take: number = tk || pageSize || 25
   const skip: number = sk || (page - 1) * pageSize || 0
   const order: string[] = !Array.isArray(s) ? [s] : s
 
@@ -144,10 +144,11 @@ export async function executeFindQuery(repo: any, relations = {}, data: any = {}
   return {
     records,
     headers: {
-      'v-total': totalCount,
       'v-count': records.length,
-      'v-pagesize': extra.take,
-      'v-page': data.page || 1
+      'v-total': totalCount,
+      'v-page': data.page || 1,
+      'v-pageSize': extra.take,
+      'v-pageCount': Math.ceil(extra.take ? totalCount / extra.take : 1)
     }
   }
 }
