@@ -9,7 +9,7 @@ export async function demo() {
 
 export async function register(data: typeof User) {
   const { name, email, password } = data
-  const salt = await bcrypt.genSalt()
+  const salt = await bcrypt.genSalt(12)
   const hashedPassword = await bcrypt.hash(password, salt)
 
   try {
@@ -24,12 +24,21 @@ export async function register(data: typeof User) {
 }
 
 export async function login(data: typeof User) {
-  const { name, email, password } = data
+  const { email, password } = data
 
   try {
     const user = await global.repository.users.findOneBy({ email: email })
-    return user
+    const match = await bcrypt.compare(password, user.password)
+    return match ? user : null
   } catch (error) {
     throw error
   }
 }
+
+export async function logout(data: typeof User) {}
+
+export async function forgotPassword(data: typeof User) {}
+
+export async function resetPassword(data: typeof User) {}
+
+export async function unregister(data: typeof User) {}
