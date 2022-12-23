@@ -104,9 +104,10 @@ export const useWhere = (where: any) => {
 }
 
 export function applyQuery(data, extraWhere) {
-  const { page = 1, pageSize = 0, skip: sk = 0, take: tk = 0, sort: s, ...where } = data
-  const take: number = tk || pageSize || 25
-  const skip: number = sk || (page - 1) * pageSize || 0
+  const { page: p = 1, pageSize = 25, skip: sk = 0, take: tk = 0, sort: s, ...where } = data
+  const page: number = (p < 1 ? 1 : p) - 1
+  const take: number = tk || pageSize
+  const skip: number = sk || page * pageSize
   const order: string[] = !Array.isArray(s) ? [s] : s
 
   const query = {} as {
