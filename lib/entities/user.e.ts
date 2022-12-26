@@ -13,12 +13,17 @@ import {
 } from 'typeorm'
 
 @Entity()
+@Unique(['externalId'])
 @Unique(['username'])
 @Unique(['email'])
 @TableInheritance({ column: { type: 'varchar', name: 'type', default: 'user' } })
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
   id: number
+
+  @Index()
+  @Column()
+  externalId: string
 
   @Index()
   @Column()
@@ -30,6 +35,12 @@ export class User extends BaseEntity {
 
   @Column()
   password: string
+
+  @Column()
+  enabled: boolean
+
+  @Column()
+  enabledAt: Date
 
   @Column({ type: 'simple-array', nullable: true })
   roles: string[]
