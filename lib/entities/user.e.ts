@@ -19,7 +19,7 @@ import {
 @TableInheritance({ column: { type: 'varchar', name: 'type', default: 'user' } })
 export class User extends BaseEntity {
   @PrimaryGeneratedColumn('uuid')
-  id: number
+  id: string
 
   @Index()
   @Column()
