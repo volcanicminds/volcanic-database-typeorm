@@ -1,6 +1,5 @@
 import * as bcrypt from 'bcrypt'
 const Crypto = require('crypto')
-const { User } = require('../entities/user.e')
 
 export async function demo() {
   // const users = await User.find()
@@ -8,12 +7,12 @@ export async function demo() {
   return []
 }
 
-export async function isValidUser(data: typeof User) {
+export async function isValidUser(data: typeof global.entity.User) {
   // console.log('isValidUser ' + data)
   return !!data && !!data.id && !!data.externalId && !!data.email && !!data.password
 }
 
-export async function createUser(data: typeof User) {
+export async function createUser(data: typeof global.entity.User) {
   const { username, email, password } = data
 
   if (!email || !password) {
@@ -27,10 +26,11 @@ export async function createUser(data: typeof User) {
     let externalId, user
     do {
       externalId = Crypto.randomUUID({ disableEntropyCache: true })
+
       user = await global.repository.users.findOneBy({ externalId: externalId })
     } while (user != null)
 
-    user = await User.create({
+    user = await global.entity.User.create({
       ...data,
       enabled: true,
       enabledAt: new Date(),
@@ -38,12 +38,12 @@ export async function createUser(data: typeof User) {
       email: email,
       username: username || email,
       password: hashedPassword
-    } as typeof User)
+    } as typeof global.entity.User)
 
-    return await User.save(user)
+    return await global.entity.User.save(user)
   } catch (error) {
     if (error?.code == 23505) {
-      throw Error('Email already registered')
+      throw Error('Email or username already registered')
     }
     throw error
   }
@@ -70,7 +70,7 @@ export async function resetExternalId(id: string) {
   }
 }
 
-export async function updateUserById(id: string, user: typeof User) {
+export async function updateUserById(id: string, user: typeof global.entity.User) {
   if (!id || !user) {
     return null
   }
@@ -81,7 +81,7 @@ export async function updateUserById(id: string, user: typeof User) {
       return null
     }
     const merged = global.repository.users.merge(userEx, userNew)
-    return await User.save({ ...merged, id: id })
+    return await global.entity.User.save({ ...merged, id: id })
   } catch (error) {
     throw error
   }
@@ -149,7 +149,7 @@ export async function changePassword(email: string, password: string, oldPasswor
     if (match) {
       const salt = await bcrypt.genSalt(12)
       const hashedPassword = await bcrypt.hash(password, salt)
-      return await User.save({ ...user, password: hashedPassword })
+      return await global.entity.User.save({ ...user, password: hashedPassword })
     }
     return null
   } catch (error) {

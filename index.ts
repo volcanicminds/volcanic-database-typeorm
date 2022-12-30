@@ -4,7 +4,7 @@ import 'reflect-metadata'
 import { DataSource } from 'typeorm'
 import * as loaderEntities from './lib/loader/entities'
 import * as userManager from './lib/loader/userManager'
-import { User } from './lib/entities/user.e'
+import { User } from './lib/entities/user'
 import { applyQuery, executeCountQuery, executeFindQuery, useOrder, useWhere } from './lib/query'
 
 async function start(options) {
