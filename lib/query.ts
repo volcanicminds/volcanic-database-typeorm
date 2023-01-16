@@ -17,15 +17,29 @@ import * as log from './util/logger'
 const evalOrder = (val: string = '') => (['desc', 'd', 'false', '1'].includes(val.toLowerCase()) ? 'desc' : 'asc')
 
 export const useOrder = (order: string[] = []) => {
-  const orderBy = {}
+  const result = {}
   order
     .filter((o) => !!o)
     .forEach((o: string) => {
-      const p = o.split(':')
-      orderBy[p[0]] = evalOrder(p[1])
+      // Split path into component parts
+      const parts = o.split(':')
+      const fieldFullPath = parts[0].split('.')
+      const sortType = evalOrder(parts[1])
+
+      // Create sub-objects along path as needed
+      let target = result
+      while (fieldFullPath.length > 1) {
+        const fieldPath: string = fieldFullPath.shift() || ''
+        target = target[fieldPath] = target[fieldPath] || {}
+      }
+
+      const fieldName = fieldFullPath[0]
+
+      // Set value at end of path
+      target[fieldName] = sortType
     })
 
-  return orderBy
+  return result
 }
 
 export const useWhere = (where: any) => {
@@ -85,19 +99,11 @@ export const useWhere = (where: any) => {
     let value = where[objectPath]
 
     // Set value at end of path
-    // log.debug('EVALUATE FIELD')
-    // log.debug('regexp: ' + JSON.stringify(m))
-    // log.debug('target: ' + JSON.stringify(target))
-    log.debug('fieldName: ' + fieldName + ' with path: ' + objectPath)
-    log.debug('operator: ' + operator + ' on value: ' + value)
-    // log.debug('parts[0]: ' + JSON.stringify(parts[0]))
-
     if (operator) {
       value = reservedOperators[operator](value)
     }
 
     target[fieldName] = value
-    // target[parts[0]] = where[objectPath]
   }
 
   return result
