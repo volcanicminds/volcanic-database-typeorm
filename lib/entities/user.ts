@@ -6,8 +6,11 @@ export abstract class User extends BaseEntity {
   abstract username: string
   abstract email: string
   abstract password: string
-  abstract enabled: boolean
-  abstract enabledAt: Date
+  abstract confirmed: boolean
+  abstract confirmedAt: Date
+  abstract blocked: boolean
+  abstract blockedReason: string
+  abstract blockedAt: Date
   abstract roles: string[]
   abstract version: number
   abstract createdAt: Date

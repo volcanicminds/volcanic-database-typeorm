@@ -32,8 +32,10 @@ export async function createUser(data: typeof global.entity.User) {
 
     user = await global.entity.User.create({
       ...data,
-      enabled: true,
-      enabledAt: new Date(),
+      confirmed: true,
+      confirmedAt: new Date(),
+      blocked: false,
+      blockedReason: null,
       externalId: externalId,
       email: email,
       username: username || email,
@@ -61,6 +63,7 @@ export async function resetExternalId(id: string) {
       user = await global.repository.users.findOneBy({ externalId: externalId })
     } while (user != null)
 
+    // TODO: use externalId instead id
     return await updateUserById(id, { externalId: externalId })
   } catch (error) {
     if (error?.code == 23505) {
@@ -157,10 +160,10 @@ export async function changePassword(email: string, password: string, oldPasswor
   }
 }
 
-export async function enableUserById(id: string) {
-  return updateUserById(id, { enabled: true, enabledAt: new Date() })
+export async function blockUserById(id: string, reason: string) {
+  return updateUserById(id, { blocked: true, blockedAt: new Date(), blockedReason: reason })
 }
 
-export async function disableUserById(id: string) {
-  return updateUserById(id, { enabled: false, enabledAt: new Date() })
+export async function unblockUserById(id: string) {
+  return updateUserById(id, { blocked: false, blockedAt: new Date(), blockedReason: null })
 }
