@@ -11,6 +11,7 @@ export abstract class User extends BaseEntity {
   abstract blocked: boolean
   abstract blockedReason: string
   abstract blockedAt: Date
+  abstract resetPasswordToken: string
   abstract roles: string[]
   abstract version: number
   abstract createdAt: Date
