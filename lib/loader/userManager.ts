@@ -160,6 +160,34 @@ export async function changePassword(email: string, password: string, oldPasswor
   }
 }
 
+export async function forgotPassword(email: string) {
+  if (!email) {
+    return null
+  }
+  try {
+    const user = await global.repository.users.findOneBy({ email: email })
+    if (user) {
+      return await global.entity.User.save({ ...user, resetPasswordToken: Crypto.randomBytes(64).toString('hex') })
+    }
+    return null
+  } catch (error) {
+    throw error
+  }
+}
+
+export async function resetPassword(user: typeof global.entity.User, password: string) {
+  if (!user || !password) {
+    return null
+  }
+  try {
+    const salt = await bcrypt.genSalt(12)
+    const hashedPassword = await bcrypt.hash(password, salt)
+    return await global.entity.User.save({ ...user, resetPasswordToken: null, password: hashedPassword })
+  } catch (error) {
+    throw error
+  }
+}
+
 export async function blockUserById(id: string, reason: string) {
   return updateUserById(id, { blocked: true, blockedAt: new Date(), blockedReason: reason })
 }
