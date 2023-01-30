@@ -1,12 +1,6 @@
 import * as bcrypt from 'bcrypt'
 const Crypto = require('crypto')
 
-export async function demo() {
-  // const users = await User.find()
-  // return users || []
-  return []
-}
-
 export async function isValidUser(data: typeof global.entity.User) {
   // console.log('isValidUser ' + data)
   return !!data && !!data.id && !!data.externalId && !!data.email && !!data.password
@@ -32,8 +26,8 @@ export async function createUser(data: typeof global.entity.User) {
 
     user = await global.entity.User.create({
       ...data,
-      confirmed: true,
-      confirmedAt: new Date(),
+      confirmed: false,
+      confirmationToken: Crypto.randomBytes(64).toString('hex'),
       blocked: false,
       blockedReason: null,
       externalId: externalId,
@@ -183,6 +177,17 @@ export async function resetPassword(user: typeof global.entity.User, password: s
     const salt = await bcrypt.genSalt(12)
     const hashedPassword = await bcrypt.hash(password, salt)
     return await global.entity.User.save({ ...user, resetPasswordToken: null, password: hashedPassword })
+  } catch (error) {
+    throw error
+  }
+}
+
+export async function userConfirmation(user: typeof global.entity.User) {
+  if (!user) {
+    return null
+  }
+  try {
+    return await global.entity.User.save({ ...user, confirmed: true, confirmedAt: new Date(), confirmationToken: null })
   } catch (error) {
     throw error
   }
