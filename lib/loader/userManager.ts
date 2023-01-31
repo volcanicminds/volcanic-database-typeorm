@@ -176,7 +176,13 @@ export async function resetPassword(user: typeof global.entity.User, password: s
   try {
     const salt = await bcrypt.genSalt(12)
     const hashedPassword = await bcrypt.hash(password, salt)
-    return await global.entity.User.save({ ...user, resetPasswordToken: null, password: hashedPassword })
+    return await global.entity.User.save({
+      ...user,
+      confirmed: true,
+      confirmedAt: new Date(),
+      resetPasswordToken: null,
+      password: hashedPassword
+    })
   } catch (error) {
     throw error
   }
