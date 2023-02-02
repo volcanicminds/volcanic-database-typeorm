@@ -115,6 +115,28 @@ export async function retrieveUserByUsername(username: string) {
   }
 }
 
+export async function retrieveUserByConfirmationToken(code: string) {
+  if (!code) {
+    return null
+  }
+  try {
+    return await global.repository.users.findOneBy({ confirmationToken: code })
+  } catch (error) {
+    throw error
+  }
+}
+
+export async function retrieveUserByResetPasswordToken(code: string) {
+  if (!code) {
+    return null
+  }
+  try {
+    return await global.repository.users.findOneBy({ resetPasswordToken: code })
+  } catch (error) {
+    throw error
+  }
+}
+
 export async function retrieveUserByExternalId(externalId: string) {
   if (!externalId) {
     return null
