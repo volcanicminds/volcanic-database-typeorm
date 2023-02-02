@@ -1,7 +1,7 @@
 import { BaseEntity } from 'typeorm'
 
 export abstract class User extends BaseEntity {
-  abstract id: any
+  // abstract id: any
   abstract externalId: string
   abstract username: string
   abstract email: string
@@ -18,4 +18,6 @@ export abstract class User extends BaseEntity {
   abstract createdAt: Date
   abstract updatedAt: Date
   abstract deletedAt: Date
+  abstract setId(id: any)
+  abstract getId(): any
 }

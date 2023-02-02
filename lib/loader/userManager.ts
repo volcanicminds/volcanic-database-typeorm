@@ -2,8 +2,7 @@ import * as bcrypt from 'bcrypt'
 const Crypto = require('crypto')
 
 export async function isValidUser(data: typeof global.entity.User) {
-  // console.log('isValidUser ' + data)
-  return !!data && !!data.id && !!data.externalId && !!data.email && !!data.password
+  return !!data && !!data.getId() && !!data.externalId && !!data.email && !!data.password
 }
 
 export async function createUser(data: typeof global.entity.User) {
@@ -61,7 +60,7 @@ export async function resetExternalId(id: string) {
     return await updateUserById(id, { externalId: externalId })
   } catch (error) {
     if (error?.code == 23505) {
-      throw Error('External ID not reset')
+      throw Error('External ID not changed')
     }
     throw error
   }
@@ -72,13 +71,12 @@ export async function updateUserById(id: string, user: typeof global.entity.User
     return null
   }
   try {
-    const { id: userId, ...userNew } = user
-    const userEx = await global.repository.users.findOneBy({ id: id })
+    const userEx = await global.repository.users.findOneById(id)
     if (!userEx) {
       return null
     }
-    const merged = global.repository.users.merge(userEx, userNew)
-    return await global.entity.User.save({ ...merged, id: id })
+    const merged = global.repository.users.merge(userEx, user)
+    return await global.entity.User.save(merged)
   } catch (error) {
     throw error
   }
@@ -89,7 +87,7 @@ export async function retrieveUserById(id: string) {
     return null
   }
   try {
-    return await global.repository.users.findOneBy({ id: id })
+    return await global.repository.users.findOneById(id)
   } catch (error) {
     throw error
   }
