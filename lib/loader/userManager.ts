@@ -104,6 +104,17 @@ export async function retrieveUserByEmail(email: string) {
   }
 }
 
+export async function retrieveUserByUsername(username: string) {
+  if (!username) {
+    return null
+  }
+  try {
+    return await global.repository.users.findOneBy({ username })
+  } catch (error) {
+    throw error
+  }
+}
+
 export async function retrieveUserByExternalId(externalId: string) {
   if (!externalId) {
     return null
