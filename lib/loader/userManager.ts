@@ -2,7 +2,7 @@ import * as bcrypt from 'bcrypt'
 const Crypto = require('crypto')
 
 export async function isValidUser(data: typeof global.entity.User) {
-  return !!data && !!data.getId() && !!data.externalId && !!data.email && !!data.password
+  return !!data && (!!data._id || !!data.id) && !!data.externalId && !!data.email && !!data.password
 }
 
 export async function createUser(data: typeof global.entity.User) {
