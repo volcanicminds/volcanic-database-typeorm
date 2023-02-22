@@ -4,7 +4,9 @@ import 'reflect-metadata'
 import { DataSource } from 'typeorm'
 import * as loaderEntities from './lib/loader/entities'
 import * as userManager from './lib/loader/userManager'
+import * as tokenManager from './lib/loader/tokenManager'
 import { User } from './lib/entities/user'
+import { Token } from './lib/entities/token'
 import { applyQuery, executeCountQuery, executeFindQuery, useOrder, useWhere } from './lib/query'
 
 async function start(options) {
@@ -71,5 +73,28 @@ async function start(options) {
 }
 
 export { Database } from './types/global'
-export { User, userManager, DataSource, applyQuery, executeCountQuery, executeFindQuery, useOrder, useWhere }
-module.exports = { start, User, userManager, applyQuery, executeCountQuery, executeFindQuery, useOrder, useWhere }
+export {
+  start,
+  User,
+  Token,
+  userManager,
+  tokenManager,
+  DataSource,
+  applyQuery,
+  executeCountQuery,
+  executeFindQuery,
+  useOrder,
+  useWhere
+}
+module.exports = {
+  start,
+  User,
+  Token,
+  userManager,
+  tokenManager,
+  applyQuery,
+  executeCountQuery,
+  executeFindQuery,
+  useOrder,
+  useWhere
+}

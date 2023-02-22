@@ -1,5 +1,6 @@
 import * as bcrypt from 'bcrypt'
 const Crypto = require('crypto')
+import { executeCountQuery, executeFindQuery } from '../query'
 
 export async function isValidUser(data: typeof global.entity.User) {
   return !!data && (!!data._id || !!data.id) && !!data.externalId && !!data.email && !!data.password
@@ -236,4 +237,12 @@ export async function blockUserById(id: string, reason: string) {
 
 export async function unblockUserById(id: string) {
   return updateUserById(id, { blocked: false, blockedAt: new Date(), blockedReason: null })
+}
+
+export async function countQuery(data: any) {
+  return await executeCountQuery(global.repository.users, data)
+}
+
+export async function findQuery(data: any) {
+  return await executeFindQuery(global.repository.users, {}, data)
 }
