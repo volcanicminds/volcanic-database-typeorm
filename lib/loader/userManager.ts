@@ -156,14 +156,11 @@ export async function retrieveUserByPassword(email: string, password: string) {
   try {
     const user = await global.repository.users.findOneBy({ email: email })
     if (!user) {
-      // console.log('retrieveUserByPassword before ' + user)
       return null
     }
     const match = await bcrypt.compare(password, user.password)
-    // console.log('retrieveUserByPassword matched ' + match + ' password ' + password + ' email ' + email)
     return match ? user : null
   } catch (error) {
-    // console.log('retrieveUserByPassword ' + error)
     throw error
   }
 }
