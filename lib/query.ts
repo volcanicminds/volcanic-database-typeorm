@@ -163,11 +163,7 @@ export async function executeFindQuery(repo: any, relations = {}, data: any = {}
 export async function executeCountQuery(repo: any, data = {}, extraWhere: any = {}) {
   const { where = {} } = applyQuery(data, extraWhere)
 
-  console.log(Object.keys(repo.target.dataSource.options))
-  console.log(repo.target.dataSource.options)
-
-  const res = await repo.count(isMongo(repo) ? where : { where: where })
-  return res
+  return await repo.count(isMongo(repo) ? where : { where: where })
 }
 
 function getType(repo) {
