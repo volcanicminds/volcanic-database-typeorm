@@ -135,8 +135,6 @@ export function applyQuery(data, extraWhere) {
 
   // merge extraWhere and where
   query.where = Array.isArray(extra) ? extra.map((w) => ({ ...w, ...query.where })) : { ...extra, ...query.where }
-
-  // log.debug('FINAL WHERE: ' + JSON.stringify(query.where))
   return query
 }
 
@@ -162,7 +160,6 @@ export async function executeFindQuery(repo: any, relations = {}, data: any = {}
 
 export async function executeCountQuery(repo: any, data = {}, extraWhere: any = {}) {
   const { where = {} } = applyQuery(data, extraWhere)
-
   return await repo.count(isMongo(repo) ? where : { where: where })
 }
 
