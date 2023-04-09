@@ -36,7 +36,7 @@
     "bcrypt": "^5.1.0",
     "pluralize": "^8.0.0",
     "reflect-metadata": "^0.1.13",
-    "typeorm": "^0.3.10"
+    "typeorm": "^0.3.14"
   },
   "devDependencies": {
     "@types/node": "^18.11.10",
