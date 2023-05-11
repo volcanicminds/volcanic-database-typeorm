@@ -53,5 +53,10 @@
   "author": "Volcanic Minds <developers@volcanicminds.com> (https://volcanicminds.com)",
   "maintainers": [
     "Developers <developers@volcanicminds.com> (https://volcanicminds.com)"
-  ]
+  ],
+  "types": "./dist/index.d.ts",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  }
 }
