@@ -1,6 +1,10 @@
 const Crypto = require('crypto')
 import { executeCountQuery, executeFindQuery } from '../query'
 
+export function isImplemented() {
+  return true
+}
+
 export async function isValidToken(data: typeof global.entity.Token) {
   return !!data && (!!data._id || !!data.id) && !!data.externalId && !!data.name
 }

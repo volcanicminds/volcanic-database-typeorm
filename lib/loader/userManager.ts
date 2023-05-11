@@ -2,6 +2,10 @@ import * as bcrypt from 'bcrypt'
 const Crypto = require('crypto')
 import { executeCountQuery, executeFindQuery } from '../query'
 
+export function isImplemented() {
+  return true
+}
+
 export async function isValidUser(data: typeof global.entity.User) {
   return !!data && (!!data._id || !!data.id) && !!data.externalId && !!data.email && !!data.password
 }
