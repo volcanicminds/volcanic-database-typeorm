@@ -56,7 +56,7 @@ async function start(options) {
     //   `${process.cwd()}/src/entities/*.e.{ts,js}`
     // ]
 
-    new DataSource(options)
+    return new DataSource(options)
       .initialize()
       .then(async (ds) => {
         // load uselful stuff
