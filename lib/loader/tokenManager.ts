@@ -55,7 +55,7 @@ export async function resetExternalId(id: string) {
     return await updateTokenById(id, { externalId: externalId })
   } catch (error) {
     if (error?.code == 23505) {
-      throw Error('External ID not changed')
+      throw new Error('External ID not changed')
     }
     throw error
   }

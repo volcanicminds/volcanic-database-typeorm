@@ -43,7 +43,7 @@ export async function createUser(data: typeof global.entity.User) {
     return await global.entity.User.save(user)
   } catch (error) {
     if (error?.code == 23505) {
-      throw Error('Email or username already registered')
+      throw new Error('Email or username already registered')
     }
     throw error
   }
@@ -65,7 +65,7 @@ export async function resetExternalId(id: string) {
     return await updateUserById(id, { externalId: externalId })
   } catch (error) {
     if (error?.code == 23505) {
-      throw Error('External ID not changed')
+      throw new Error('External ID not changed')
     }
     throw error
   }

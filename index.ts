@@ -26,7 +26,7 @@ async function start(options) {
     }
 
     if (options == null || Object.keys(options).length == 0) {
-      throw Error('Volcanic Database: options not specified')
+      throw new Error('Volcanic Database: options not specified')
     }
 
     const { LOG_DB_LEVEL = process.env.LOG_LEVEL || 'trace', LOG_COLORIZE = true } = process.env
