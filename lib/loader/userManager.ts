@@ -30,6 +30,7 @@ export async function createUser(data: typeof global.entity.User) {
 
     user = await global.entity.User.create({
       ...data,
+      passwordChangedAt: new Date(),
       confirmed: false,
       confirmationToken: Crypto.randomBytes(64).toString('hex'),
       blocked: false,
@@ -179,7 +180,7 @@ export async function changePassword(email: string, password: string, oldPasswor
     if (match) {
       const salt = await bcrypt.genSalt(12)
       const hashedPassword = await bcrypt.hash(password, salt)
-      return await global.entity.User.save({ ...user, password: hashedPassword })
+      return await global.entity.User.save({ ...user, passwordChangedAt: new Date(), password: hashedPassword })
     }
     return null
   } catch (error) {
@@ -193,8 +194,12 @@ export async function forgotPassword(email: string) {
   }
   try {
     const user = await global.repository.users.findOneBy({ email: email })
+
     if (user) {
-      return await global.entity.User.save({ ...user, resetPasswordToken: Crypto.randomBytes(64).toString('hex') })
+      return await global.entity.User.save({
+        ...user,
+        resetPasswordToken: Crypto.randomBytes(64).toString('hex')
+      })
     }
     return null
   } catch (error) {
@@ -211,6 +216,7 @@ export async function resetPassword(user: typeof global.entity.User, password: s
     const hashedPassword = await bcrypt.hash(password, salt)
     return await global.entity.User.save({
       ...user,
+      passwordChangedAt: new Date(),
       confirmed: true,
       confirmedAt: new Date(),
       resetPasswordToken: null,
@@ -238,6 +244,29 @@ export async function blockUserById(id: string, reason: string) {
 
 export async function unblockUserById(id: string) {
   return updateUserById(id, { blocked: false, blockedAt: new Date(), blockedReason: null })
+}
+
+export function isPasswordToBeChanged(user: typeof global.entity.User) {
+  if (process.env.PASSWORD_EXPIRATION_DAYS != null) {
+    let passwordExpirationDays = -1
+    try {
+      passwordExpirationDays = Number(process.env.PASSWORD_EXPIRATION_DAYS)
+      if (passwordExpirationDays <= 0) {
+        throw new Error('PASSWORD_EXPIRATION_DAYS_ENV_INVALID')
+      }
+    } catch (e) {
+      throw new Error(e)
+    }
+    const { passwordChangedAt } = user
+    const date1 = new Date(passwordChangedAt)
+    const date2 = new Date()
+    const differenceInTime = date2.getTime() - date1.getTime()
+    const differenceInDays = differenceInTime / (1000 * 3600 * 24)
+
+    return differenceInDays >= passwordExpirationDays
+  }
+
+  return false
 }
 
 export async function countQuery(data: any) {
