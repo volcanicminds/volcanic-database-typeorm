@@ -44,7 +44,9 @@ async function start(options) {
         ? 'error'
         : false
 
+    global.cacheTimeout = options?.cacheTimeout || 30000 // milliseconds
     global.isLoggingEnabled = options?.logging || true
+
     const { classes, repositories, entities } = loaderEntities.load()
     options.entities = [...(options.entities || []), ...(entities || [])]
     options.logger = LOG_COLORIZE ? 'advanced-console' : 'simple-console'
