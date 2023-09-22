@@ -5,9 +5,12 @@ import { DataSource } from 'typeorm'
 import * as loaderEntities from './lib/loader/entities'
 import * as userManager from './lib/loader/userManager'
 import * as tokenManager from './lib/loader/tokenManager'
+import * as dataBaseManager from './lib/loader/dataBaseManager'
 import { User } from './lib/entities/user'
 import { Token } from './lib/entities/token'
 import { applyQuery, executeCountQuery, executeFindQuery, useOrder, useWhere } from './lib/query'
+import * as log from './lib/util/logger'
+import yn from './lib/util/yn'
 
 async function start(options) {
   return new Promise<DataSource>((resolve, reject) => {
@@ -29,7 +32,11 @@ async function start(options) {
       throw new Error('Volcanic Database: options not specified')
     }
 
-    const { LOG_DB_LEVEL = process.env.LOG_LEVEL || 'trace', LOG_COLORIZE = true } = process.env
+    const {
+      LOG_DB_LEVEL = process.env.LOG_LEVEL || 'trace',
+      LOG_COLORIZE = true,
+      DB_SYNCHRONIZE_SCHEMA_AT_STARTUP = false
+    } = process.env
 
     const logLevel: string | boolean =
       LOG_DB_LEVEL === 'trace'
@@ -51,6 +58,7 @@ async function start(options) {
     options.entities = [...(options.entities || []), ...(entities || [])]
     options.logger = LOG_COLORIZE ? 'advanced-console' : 'simple-console'
     options.logging = logLevel
+    options.synchronize = false
 
     // options.entities = [
     //   ...(options.entities || []),
@@ -61,6 +69,12 @@ async function start(options) {
     return new DataSource(options)
       .initialize()
       .then(async (ds) => {
+        if (yn(DB_SYNCHRONIZE_SCHEMA_AT_STARTUP, false)) {
+          log.warn('Database schema synchronization started')
+          await ds.synchronize()
+          log.warn('Database schema synchronization finished')
+        }
+
         // load uselful stuff
         const repository = {}
         Object.keys(repositories).map((r) => (repository[r] = ds.getRepository(repositories[r])))
@@ -81,6 +95,7 @@ export {
   Token,
   userManager,
   tokenManager,
+  dataBaseManager,
   DataSource,
   applyQuery,
   executeCountQuery,
@@ -88,12 +103,14 @@ export {
   useOrder,
   useWhere
 }
+
 module.exports = {
   start,
   User,
   Token,
   userManager,
   tokenManager,
+  dataBaseManager,
   applyQuery,
   executeCountQuery,
   executeFindQuery,
