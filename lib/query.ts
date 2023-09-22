@@ -12,8 +12,6 @@ import {
   LessThanOrEqual
 } from 'typeorm'
 
-import * as log from './util/logger'
-
 const evalOrder = (val: string = '') => (['desc', 'd', 'false', '1'].includes(val.toLowerCase()) ? 'desc' : 'asc')
 
 export const useOrder = (order: string[] = []) => {
