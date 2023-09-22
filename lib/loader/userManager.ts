@@ -148,7 +148,7 @@ export async function retrieveUserByExternalId(externalId: string) {
     return null
   }
   try {
-    return await global.repository.users.find({
+    return await global.repository.users.findOne({
       where: { externalId: externalId },
       cache: global.cacheTimeout
     })
