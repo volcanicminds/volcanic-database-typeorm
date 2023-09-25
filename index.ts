@@ -1,5 +1,8 @@
 'use strict'
 
+import dotenv from 'dotenv'
+dotenv.config()
+
 import 'reflect-metadata'
 import { DataSource } from 'typeorm'
 import * as loaderEntities from './lib/loader/entities'
