@@ -11,6 +11,7 @@ import * as tokenManager from './lib/loader/tokenManager'
 import * as dataBaseManager from './lib/loader/dataBaseManager'
 import { User } from './lib/entities/user'
 import { Token } from './lib/entities/token'
+import { Change } from './lib/entities/change'
 import { applyQuery, executeCountQuery, executeFindQuery, useOrder, useWhere } from './lib/query'
 import * as log from './lib/util/logger'
 import yn from './lib/util/yn'
@@ -35,11 +36,7 @@ async function start(options) {
       throw new Error('Volcanic Database: options not specified')
     }
 
-    const {
-      LOG_DB_LEVEL = process.env.LOG_LEVEL || 'trace',
-      LOG_COLORIZE = true,
-      DB_SYNCHRONIZE_SCHEMA_AT_STARTUP = false
-    } = process.env
+    const { LOG_DB_LEVEL = 'warn', LOG_COLORIZE = true, DB_SYNCHRONIZE_SCHEMA_AT_STARTUP = false } = process.env
 
     const logLevel: string | boolean =
       LOG_DB_LEVEL === 'trace'
@@ -52,7 +49,7 @@ async function start(options) {
         ? 'warn'
         : LOG_DB_LEVEL === 'error'
         ? 'error'
-        : false
+        : LOG_DB_LEVEL
 
     global.cacheTimeout = options?.cacheTimeout || 30000 // milliseconds
     global.isLoggingEnabled = options?.logging || true
@@ -96,6 +93,7 @@ export {
   start,
   User,
   Token,
+  Change,
   userManager,
   tokenManager,
   dataBaseManager,
@@ -111,6 +109,7 @@ module.exports = {
   start,
   User,
   Token,
+  Change,
   userManager,
   tokenManager,
   dataBaseManager,
