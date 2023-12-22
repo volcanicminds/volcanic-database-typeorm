@@ -279,3 +279,8 @@ export async function countQuery(data: any) {
 export async function findQuery(data: any) {
   return await executeFindQuery(global.repository.users, {}, data)
 }
+
+export async function disableUserById(id: string) {
+  await updateUserById(id, { blocked: true, blockedAt: new Date(), blockedReason: 'User disabled to unregister' })
+  return resetExternalId(id)
+}
