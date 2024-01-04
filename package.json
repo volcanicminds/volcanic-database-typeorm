@@ -34,7 +34,7 @@
   "dependencies": {
     "bcrypt": "^5.1.0",
     "pluralize": "^8.0.0",
-    "reflect-metadata": "^0.1.13",
+    "reflect-metadata": "^0.2.0",
     "typeorm": "^0.3.10"
   },
   "devDependencies": {
