@@ -2,6 +2,7 @@ import {
   Not,
   Like,
   ILike,
+  Raw,
   Equal,
   IsNull,
   In,
@@ -47,6 +48,7 @@ export const useWhere = (where: any) => {
   const reservedOperators = {
     ':null': (v) => (v == 'false' ? Not(IsNull()) : IsNull()), // generic: is null
     ':notNull': (v) => (v == 'true' ? Not(IsNull()) : IsNull()), // generic: is not null
+    ':raw': (v) => Raw((alias) => `${alias}${v}`), // generic: raw
 
     ':in': (v) => In(val(v).split(',')), // array: includes
     ':nin': (v) => Not(In(val(v).split(','))), // array: not includes
