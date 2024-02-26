@@ -106,3 +106,12 @@ esm
 
 # Auto uploaded data for the container
 data
+
+# yarn new version
+.yarn/*
+!.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
