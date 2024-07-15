@@ -1,3 +1,4 @@
+const path = require('path')
 const glob = require('glob')
 const pluralize = require('pluralize')
 
@@ -6,7 +7,11 @@ export function load() {
   const repositories: any = {}
   const entities: any[] = []
 
-  const patterns = [`${__dirname}/../entities/*.e.{ts,js}`, `${process.cwd()}/src/entities/*.e.{ts,js}`]
+  const patterns = [
+    path.join(__dirname, '..', 'entities', '*.e.{ts,js}'),
+    path.join(process.cwd(), 'src', 'entities', '*.e.{ts,js}')
+  ]
+
   patterns.forEach((pattern) => {
     glob.sync(pattern, { nodir: true, nosort: true, stat: false }).forEach((f: string) => {
       const entityClass = require(f)
