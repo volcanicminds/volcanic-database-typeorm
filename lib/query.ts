@@ -138,12 +138,19 @@ export function applyQuery(data, extraWhere) {
   return query
 }
 
-export async function executeFindQuery(repo: any, relations = {}, data: any = {}, extraWhere: any = {}) {
+export async function executeFindQuery(
+  repo: any,
+  relations: any = {},
+  data: any = {},
+  extraWhere: any = {},
+  extraOptions: any = {} // f.e. for select, loadEagerRelations ecc
+) {
   const extra = applyQuery(data, extraWhere)
 
   const [records = [], totalCount] = await repo.findAndCount({
     relations: relations,
-    ...extra
+    ...extra,
+    ...extraOptions
   })
 
   return {
