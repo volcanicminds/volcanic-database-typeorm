@@ -20,12 +20,10 @@ export const useOrder = (order: string[] = []) => {
   order
     .filter((o) => !!o)
     .forEach((o: string) => {
-      // Split path into component parts
       const parts = o.split(':')
       const fieldFullPath = parts[0].split('.')
       const sortType = evalOrder(parts[1])
 
-      // Create sub-objects along path as needed
       let target = result
       while (fieldFullPath.length > 1) {
         const fieldPath: string = fieldFullPath.shift() || ''
@@ -34,59 +32,52 @@ export const useOrder = (order: string[] = []) => {
 
       const fieldName = fieldFullPath[0]
 
-      // Set value at end of path
       target[fieldName] = sortType
     })
 
   return result
 }
 
-export const useWhere = (where: any) => {
+export const useWhere = (where: any, repo?: any) => {
   const result = {}
-
+  const isTargetMongo = isMongo(repo)
   const val = (v) => v || 'notFound'
+
   const reservedOperators = {
-    ':null': (v) => (v == 'false' ? Not(IsNull()) : IsNull()), // generic: is null
-    ':notNull': (v) => (v == 'true' ? Not(IsNull()) : IsNull()), // generic: is not null
-    ':raw': (v) => Raw((alias) => `${alias} ${v}`), // generic: raw
-
-    ':in': (v) => In(val(v).split(',')), // array: includes
-    ':nin': (v) => Not(In(val(v).split(','))), // array: not includes
-
-    ':likei': (v) => ILike(`${val(v)}`), // string: contains
-    ':containsi': (v) => ILike(`%${val(v)}%`), // string: contains (ignore-case)
-    ':ncontainsi': (v) => Not(ILike(`%${val(v)}%`)), // string: not contains (ignore-case)
-    ':startsi': (v) => ILike(`${val(v)}%`), // string: starts (ignore-case)
-    ':endsi': (v) => ILike(`%${val(v)}`), // string: ends (ignore-case)
-    ':eqi': (v) => ILike(v), // generic: equals (ignore-case)
-    ':neqi': (v) => Not(ILike(v)), // generic: not equals (ignore-case)
-
-    ':like': (v) => Like(`${val(v)}`), // string: contains
-    ':contains': (v) => Like(`%${val(v)}%`), // string: contains
-    ':ncontains': (v) => Not(Like(`%${val(v)}%`)), // string: not contains
-    ':starts': (v) => Like(`${val(v)}%`), // string: starts
-    ':ends': (v) => Like(`%${val(v)}`), // string: ends
-    ':eq': (v) => Equal(v), // generic: equals
-    ':neq': (v) => Not(Equal(v)), // generic: not equals
-
-    ':gt': (v) => MoreThan(v), // generic: greater than
-    ':ge': (v) => MoreThanOrEqual(v), // generic: greater than or equals
-    ':lt': (v) => LessThan(v), // generic: less than
-    ':le': (v) => LessThanOrEqual(v), // generic: less than or equals
+    ':null': (v) => (v == 'false' ? Not(IsNull()) : IsNull()),
+    ':notNull': (v) => (v == 'true' ? Not(IsNull()) : IsNull()),
+    ':raw': (v) => Raw((alias) => `${alias} ${v}`),
+    ':in': (v) => In(val(v).split(',')),
+    ':nin': (v) => Not(In(val(v).split(','))),
+    ':likei': (v) => (isTargetMongo ? new RegExp(val(v), 'i') : ILike(`%${val(v)}%`)),
+    ':containsi': (v) => (isTargetMongo ? new RegExp(val(v), 'i') : ILike(`%${val(v)}%`)),
+    ':ncontainsi': (v) => (isTargetMongo ? Not(new RegExp(val(v), 'i')) : Not(ILike(`%${val(v)}%`))),
+    ':startsi': (v) => (isTargetMongo ? new RegExp(`^${val(v)}`, 'i') : ILike(`${val(v)}%`)),
+    ':endsi': (v) => (isTargetMongo ? new RegExp(`${val(v)}$`, 'i') : ILike(`%${val(v)}`)),
+    ':eqi': (v) => (isTargetMongo ? new RegExp(`^${val(v)}$`, 'i') : ILike(v)),
+    ':neqi': (v) => (isTargetMongo ? Not(new RegExp(`^${val(v)}$`, 'i')) : Not(ILike(v))),
+    ':like': (v) => Like(`${val(v)}`),
+    ':contains': (v) => Like(`%${val(v)}%`),
+    ':ncontains': (v) => Not(Like(`%${val(v)}%`)),
+    ':starts': (v) => Like(`${val(v)}%`),
+    ':ends': (v) => Like(`%${val(v)}`),
+    ':eq': (v) => (isTargetMongo ? v : Equal(v)),
+    ':neq': (v) => Not(Equal(v)),
+    ':gt': (v) => MoreThan(v),
+    ':ge': (v) => MoreThanOrEqual(v),
+    ':lt': (v) => LessThan(v),
+    ':le': (v) => LessThanOrEqual(v),
     ':between': (v) => {
       const s = v?.split(':')
       return s?.length == 2 ? Between(s[0], s[1]) : v
-    } // generic: in the range, for example - myfield:between=10:15
+    }
   }
 
   const reservedWords = Object.keys(reservedOperators).join('|')
 
-  // For each object path (property key) in the object
   for (const objectPath in where) {
-    // Split path into component parts
     const parts = objectPath.split('.')
 
-    // Create sub-objects along path as needed
     let target = result
     while (parts.length > 1) {
       const part: string = parts.shift() || ''
@@ -98,7 +89,6 @@ export const useWhere = (where: any) => {
     const fieldName = operator ? parts[0].replace(operator, '') : parts[0]
     let value = where[objectPath]
 
-    // Set value at end of path
     if (operator) {
       value = reservedOperators[operator](value)
     }
@@ -109,7 +99,7 @@ export const useWhere = (where: any) => {
   return result
 }
 
-export function applyQuery(data, extraWhere) {
+export function applyQuery(data, extraWhere, repo) {
   const { page: p = 1, pageSize = 25, skip: sk = 0, take: tk = 0, sort: s, ...where } = data
   const page: number = (p < 1 ? 1 : p) - 1
   const take: number = tk || pageSize
@@ -126,14 +116,13 @@ export function applyQuery(data, extraWhere) {
   if (skip) query.skip = skip
   if (take) query.take = take
   if (order) query.order = useOrder(order)
-  if (where) query.where = useWhere(where)
+  if (where) query.where = useWhere(where, repo)
 
   let extra: any
   if (extraWhere) {
-    extra = Array.isArray(extraWhere) ? extraWhere.map((w) => useWhere(w)) : useWhere(extraWhere)
+    extra = Array.isArray(extraWhere) ? extraWhere.map((w) => useWhere(w, repo)) : useWhere(extraWhere, repo)
   }
 
-  // merge extraWhere and where
   query.where = Array.isArray(extra) ? extra.map((w) => ({ ...w, ...query.where })) : { ...extra, ...query.where }
   return query
 }
@@ -143,9 +132,9 @@ export async function executeFindQuery(
   relations: any = {},
   data: any = {},
   extraWhere: any = {},
-  extraOptions: any = {} // f.e. for select, loadEagerRelations ecc
+  extraOptions: any = {}
 ) {
-  const extra = applyQuery(data, extraWhere)
+  const extra = applyQuery(data, extraWhere, repo)
 
   const [records = [], totalCount] = await repo.findAndCount({
     relations: relations,
@@ -166,12 +155,12 @@ export async function executeFindQuery(
 }
 
 export async function executeCountQuery(repo: any, data = {}, extraWhere: any = {}) {
-  const { where = {} } = applyQuery(data, extraWhere)
+  const { where = {} } = applyQuery(data, extraWhere, repo)
   return await repo.count(isMongo(repo) ? where : { where: where })
 }
 
 function getType(repo) {
-  return repo?.target?.dataSource?.options?.type || 'pg'
+  return repo?.manager?.connection?.options?.type || 'pg'
 }
 
 function isMongo(repo) {

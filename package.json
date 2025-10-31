@@ -1,6 +1,6 @@
 {
   "name": "@volcanicminds/typeorm",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "license": "MIT",
   "description": "TypeORM for the volcanic (minds) backend",
   "keywords": [
@@ -37,7 +37,7 @@
     "dotenv": "^16.4.5",
     "pluralize": "^8.0.0",
     "reflect-metadata": "^0.1.14",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.27"
   },
   "devDependencies": {
     "@types/node": "^18.19.59",
