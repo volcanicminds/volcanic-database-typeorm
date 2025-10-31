@@ -38,8 +38,62 @@ export const useOrder = (order: string[] = []) => {
   return result
 }
 
+const parseLogicExpression = (logic: string) => {
+  const tokens = logic.match(/\(|\)|[A-Za-z0-9_:]+|\s*(AND|OR)\s*/g)?.filter((t) => t.trim()) || []
+  let pos = 0
+
+  const parseExpression = () => {
+    let left = parseTerm()
+    while (pos < tokens.length && (tokens[pos].trim() === 'OR' || tokens[pos].trim() === 'AND')) {
+      const operator = tokens[pos++].trim()
+      const right = parseTerm()
+      left = { type: operator, left, right }
+    }
+    return left
+  }
+
+  const parseTerm = () => {
+    if (tokens[pos] === '(') {
+      pos++
+      const node = parseExpression()
+      if (tokens[pos] !== ')') {
+        throw new Error('Mismatched parentheses in _logic expression')
+      }
+      pos++
+      return node
+    }
+    return { type: 'operand', value: tokens[pos++] }
+  }
+
+  return parseExpression()
+}
+
+const buildWhereFromAst = (ast: any, aliasMap: Map<string, any>) => {
+  if (!ast) return {}
+  if (ast.type === 'operand') {
+    if (!aliasMap.has(ast.value)) {
+      throw new Error(`Alias "${ast.value}" used in _logic not found in query parameters.`)
+    }
+    return aliasMap.get(ast.value)
+  }
+
+  if (ast.type === 'AND') {
+    const left = buildWhereFromAst(ast.left, aliasMap)
+    const right = buildWhereFromAst(ast.right, aliasMap)
+    return { ...left, ...right }
+  }
+
+  if (ast.type === 'OR') {
+    const left = buildWhereFromAst(ast.left, aliasMap)
+    const right = buildWhereFromAst(ast.right, aliasMap)
+    return [left, right].flat()
+  }
+
+  return {}
+}
+
 export const useWhere = (where: any, repo?: any) => {
-  const result = {}
+  const aliasMap = new Map<string, any>()
   const isTargetMongo = isMongo(repo)
   const val = (v) => v || 'notFound'
 
@@ -74,33 +128,49 @@ export const useWhere = (where: any, repo?: any) => {
   }
 
   const reservedWords = Object.keys(reservedOperators).join('|')
+  const aliasRegex = /\[([^\]]+)\]$/
 
-  for (const objectPath in where) {
-    const parts = objectPath.split('.')
+  const allConditions = {}
 
-    let target = result
+  for (const rawKey in where) {
+    let alias = ''
+    let key = rawKey
+
+    const aliasMatch = rawKey.match(aliasRegex)
+    if (aliasMatch) {
+      alias = aliasMatch[1]
+      key = rawKey.replace(aliasRegex, '')
+    } else {
+      alias = key
+    }
+
+    const m = key.match(new RegExp(`(${reservedWords})\\b`, 'ig'))
+    const operator = m?.length ? m[0] : ':eq'
+    const fullPath = key.replace(operator, '')
+    const parts = fullPath.split('.')
+    let value = where[rawKey]
+
+    if (operator && reservedOperators[operator]) {
+      value = reservedOperators[operator](value)
+    }
+
+    let condition = {}
+    let target = condition
     while (parts.length > 1) {
       const part: string = parts.shift() || ''
       target = target[part] = target[part] || {}
     }
+    target[parts[0]] = value
 
-    const m = parts[0].match(new RegExp(`(${reservedWords})\\b`, 'ig'))
-    const operator = m?.length ? m[0] : null
-    const fieldName = operator ? parts[0].replace(operator, '') : parts[0]
-    let value = where[objectPath]
-
-    if (operator) {
-      value = reservedOperators[operator](value)
-    }
-
-    target[fieldName] = value
+    aliasMap.set(alias, condition)
+    Object.assign(allConditions, condition)
   }
 
-  return result
+  return { allConditions, aliasMap }
 }
 
 export function applyQuery(data, extraWhere, repo) {
-  const { page: p = 1, pageSize = 25, skip: sk = 0, take: tk = 0, sort: s, ...where } = data
+  const { page: p = 1, pageSize = 25, skip: sk = 0, take: tk = 0, sort: s, _logic, ...where } = data
   const page: number = (p < 1 ? 1 : p) - 1
   const take: number = tk || pageSize
   const skip: number = sk || page * pageSize
@@ -110,20 +180,42 @@ export function applyQuery(data, extraWhere, repo) {
     skip?: number
     take?: number
     order?: object
-    where?: object
+    where?: object | object[]
   }
 
   if (skip) query.skip = skip
   if (take) query.take = take
   if (order) query.order = useOrder(order)
-  if (where) query.where = useWhere(where, repo)
+
+  const { allConditions, aliasMap } = useWhere(where, repo)
+
+  if (_logic) {
+    try {
+      const ast = parseLogicExpression(_logic)
+      query.where = buildWhereFromAst(ast, aliasMap)
+    } catch (e) {
+      console.error('Volcanic-TypeORM: Error parsing _logic parameter.', e)
+      query.where = allConditions
+    }
+  } else {
+    query.where = allConditions
+  }
 
   let extra: any
   if (extraWhere) {
-    extra = Array.isArray(extraWhere) ? extraWhere.map((w) => useWhere(w, repo)) : useWhere(extraWhere, repo)
+    extra = Array.isArray(extraWhere)
+      ? extraWhere.map((w) => useWhere(w, repo).allConditions)
+      : useWhere(extraWhere, repo).allConditions
   }
 
-  query.where = Array.isArray(extra) ? extra.map((w) => ({ ...w, ...query.where })) : { ...extra, ...query.where }
+  if (extra) {
+    if (Array.isArray(query.where)) {
+      query.where = query.where.map((w) => (Array.isArray(extra) ? [...extra, w] : { ...extra, ...w }))
+    } else {
+      query.where = Array.isArray(extra) ? extra.map((w) => ({ ...w, ...query.where })) : { ...extra, ...query.where }
+    }
+  }
+
   return query
 }
 

@@ -5,115 +5,163 @@
 
 # volcanic-database-typeorm
 
+`@volcanicminds/typeorm` is a powerful utility library for TypeORM that dynamically translates HTTP query string parameters into complex pagination, sorting, and filtering queries. It offers a database-agnostic abstraction layer, enabling seamless operation with both SQL (e.g., PostgreSQL) and NoSQL (e.g., MongoDB) databases for most common use cases.
+
 ## Based on
 
 Based on [TypeORM](https://www.typeorm.io) ([GitHub](https://github.com/typeorm/typeorm)).
 
 And, what you see in [package.json](package.json).
 
-## How to install
+## Core Features
 
-```js
+- **Server-Side Pagination**: Effortlessly handle large datasets by using `page` and `pageSize` parameters.
+- **Multi-Field Sorting**: Easily define complex sorting orders directly from the URL.
+- **Advanced Dynamic Filtering**: Go beyond simple equality checks with a rich set of filter operators.
+- **Nested Relation Queries**: Filter and sort based on fields of related entities using dot notation.
+- **Complex Boolean Logic**: Construct intricate queries with nested `AND` and `OR` conditions using a powerful `_logic` parameter.
+- **Hybrid Database Support**: Write a single API endpoint that works transparently with both PostgreSQL and MongoDB for standard queries.
+- **Standalone or Integrated**: Use it as a standalone utility with any Node.js framework or enjoy seamless integration with `@volcanicminds/backend`.
+
+## Installation
+
+```sh
 yarn add @volcanicminds/typeorm
 ```
 
-It's possible use this module with module [`@volcanicminds/backend`](https://github.com/volcanicminds/volcanic-backend)
+## Core Concept
 
-## How to upgrade packages
+The library's main purpose is to bridge the gap between flat HTTP query strings and the structured query objects required by TypeORM. The flow is simple yet powerful:
 
-```js
-yarn upgrade-deps
-```
+`HTTP Query String` -> `applyQuery()` -> `TypeORM Query Object`
 
-## Postgres (data types)
+This allows you to build flexible and powerful data APIs with minimal boilerplate.
 
-[typeorm postgres: database schema / column types](https://github.com/typeorm/typeorm/blob/master/test/functional/database-schema/column-types/postgres/entity/Post.ts)
+## Usage
 
-[postgres data types: all](https://www.postgresql.org/docs/current/datatype.html)
-[postgres data types: numeric](https://www.postgresql.org/docs/current/datatype-numeric.html)
+### Use Case 1: Integrated with `@volcanicminds/backend`
 
-## Entities
+This is the most straightforward way to use the library. The `executeFindQuery` function handles everything for you.
 
-For example, under `/src/entities` create the following:
+```typescript
+// src/api/users/controller/user.ts
+import { FastifyReply, FastifyRequest } from '@volcanicminds/backend'
+import { executeFindQuery } from '@volcanicminds/typeorm'
 
-```ts
-// player.e.ts
+export async function find(req: FastifyRequest, reply: FastifyReply) {
+  // req.data() automatically extracts query parameters
+  const { headers, records } = await executeFindQuery(
+    repository.users, // Your TypeORM repository
+    { company: true }, // Optional relations to include
+    req.data()
+  )
 
-import { Entity, Column, Index, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm'
-
-@Entity()
-export class Player {
-  @PrimaryGeneratedColumn('uuid')
-  id: number
-
-  @Index()
-  @Column() // default: nullable false
-  name: string
-
-  @Column({ type: 'varchar', array: true, nullable: true })
-  roles: string[]
-
-  @CreateDateColumn()
-  createdAt: Date
-
-  @UpdateDateColumn()
-  updatedAt: Date
+  return reply.type('application/json').headers(headers).send(records)
 }
 ```
 
-For more info and possibilities see [typeorm decorators](https://typeorm.io/decorator-reference)
+### Use Case 2: Standalone with Fastify/Express
 
-## Enviroment
+You can use `applyQuery` directly in any project that uses TypeORM.
 
-```rb
-# or automatically use LOG_LEVEL
-LOG_DB_LEVEL=warn
-LOG_COLORIZE=true
+```typescript
+// my-controller.ts
+import { applyQuery } from '@volcanicminds/typeorm'
+import { myUserRepository } from './repositories' // Your TypeORM repository instance
+
+app.get('/users', async (req, reply) => {
+  // applyQuery translates the request query into a TypeORM query object
+  const typeOrmQuery = applyQuery(req.query, {}, myUserRepository)
+
+  const [records, total] = await myUserRepository.findAndCount(typeOrmQuery)
+
+  // You would then typically set pagination headers and return the records
+  reply.send({ data: records, total })
+})
 ```
 
-Log levels:
+## Query String Guide
 
-- **trace**: useful and useless messages, verbose mode
-- **debug**: well, for debugging purposes.. you know what I mean
-- **info**: minimal logs necessary for understand that everything is working fine
-- **warn**: useful warnings if the environment is controlled
-- **error**: print out errors even if not blocking/fatal errors
-- **fatal**: ok you are dead now, but you want to know
+### Pagination
 
-## Query: Operators
+Use `page` and `pageSize` to control pagination.
 
-It's possible use some operators:
+- `page`: The page number to retrieve. Defaults to `1`.
+- `pageSize`: The number of records per page. Defaults to `25`.
 
-| Operator   | Description                        | Datatypes     | Example              |
-| ---------- | ---------------------------------- | ------------- | -------------------- |
-| null       | Is null                            | all           | field:null=true      |
-| notNull    | Not is null                        | all           | field:notNull=true   |
-| in         | Included in an array               | all           | field:in=A,B,C       |
-| nin        | Not included in an array           | all           | field:nin=A,B,C      |
-| gt         | Greater than                       | numeric, date | field:gt=10          |
-| ge         | Greater than or equals to          | numeric, date | field:ge=10          |
-| lt         | Less than                          | numeric, date | field:lt=10          |
-| le         | Less than or equals to             | numeric, date | field:le=10          |
-| between    | Is between A and B                 | numeric, date | field:between=A,B    |
-| like       | Like with wildcard %               | text          | field:like=va%ue     |
-| contains   | Contains                           | text          | field:contains=alu   |
-| ncontains  | Not contains                       | text          | field:ncontains=xyz  |
-| starts     | Starts with                        | text          | field:starts=val     |
-| ends       | Ends with                          | text          | field:ends=lue       |
-| eq         | Equals to                          | all           | field:eq=value       |
-| neq        | Not equals to                      | all           | field:neq=xyz        |
-| likei      | Like with wildcard % (ignore-case) | text          | field:likei=va%ue    |
-| containsi  | Contains (ignore-case)             | text          | field:containsi=alu  |
-| ncontainsi | Not contains (ignore-case)         | text          | field:ncontainsi=xyz |
-| startsi    | Starts with (ignore-case)          | text          | field:startsi=val    |
-| endsi      | Ends with (ignore-case)            | text          | field:endsi=lue      |
-| eqi        | Equals to (ignore-case)            | text          | field:eqi=value      |
-| neqi       | Not equals to (ignore-case)        | text          | field:neqi=xyz       |
+**Example**: `GET /users?page=2&pageSize=50`
 
-The expression `field=value` is equals to `field:eq=value`
+### Sorting
 
-**Pay attention**: Some datatypes, like UUID, are special types and have possibility to use only specific operator (for example: eq, null, notNull, ..)
+Use the `sort` parameter to define the order of the results. You can specify multiple `sort` parameters for multi-field sorting.
 
-## Logging
+- `sort=fieldName`: Sorts by `fieldName` in ascending order.
+- `sort=fieldName:desc`: Sorts by `fieldName` in descending order.
 
-Use Pino logger if in your project you have a `global.log` with a valid instance.
+**Example**: `GET /users?sort=lastName:asc&sort=createdAt:desc`
+
+### Filtering
+
+Filters are applied by using `fieldName:operator=value`. If no operator is specified, it defaults to a simple equality check.
+
+#### Operators Table
+
+| Operator     | Description                          | Example URL                                   | PostgreSQL | MongoDB |
+| :----------- | :----------------------------------- | :-------------------------------------------- | :--------: | :-----: |
+| `:eq`        | Equals                               | `...&status:eq=active`                        |     ✅     |   ✅    |
+| `:neq`       | Not equals                           | `...&status:neq=archived`                     |     ✅     |   ✅    |
+| `:gt`, `:ge` | Greater than / Greater than or equal | `...&visits:gt=100`                           |     ✅     |   ✅    |
+| `:lt`, `:le` | Less than / Less than or equal       | `...&price:lt=99.99`                          |     ✅     |   ✅    |
+| `:in`        | Included in an array (comma-sep.)    | `...&status:in=active,pending`                |     ✅     |   ✅    |
+| `:nin`       | Not included in an array             | `...&category:nin=old,obsolete`               |     ✅     |   ✅    |
+| `:between`   | Is between two values (colon-sep.)   | `...&createdAt:between=2024-01-01:2024-12-31` |     ✅     |   ✅    |
+| `:null`      | Is null                              | `...&deletedAt:null=true`                     |     ✅     |   ✅    |
+| `:notNull`   | Is not null                          | `...&updatedAt:notNull=true`                  |     ✅     |   ✅    |
+| `:contains`  | Contains (case-sensitive)            | `...&name:contains=Corp`                      |     ✅     |   ❌    |
+| `:containsi` | Contains (case-insensitive)          | `...&name:containsi=corp`                     |     ✅     |   ✅    |
+| `:starts`    | Starts with (case-sensitive)         | `...&code:starts=INV-`                        |     ✅     |   ❌    |
+| `:startsi`   | Starts with (case-insensitive)       | `...&code:startsi=inv-`                       |     ✅     |   ✅    |
+| `:ends`      | Ends with (case-sensitive)           | `...&file:ends=.pdf`                          |     ✅     |   ❌    |
+| `:endsi`     | Ends with (case-insensitive)         | `...&file:endsi=.pdf`                         |     ✅     |   ✅    |
+| `:eqi`       | Equals (case-insensitive)            | `...&country:eqi=it`                          |     ✅     |   ✅    |
+
+#### Nested Relation Filters
+
+Use dot notation to filter on fields of related entities.
+
+**Example**: Find all users belonging to the company named "Volcanic Minds".
+`GET /users?company.name:eq=Volcanic Minds`
+
+### Complex Boolean Logic with `_logic`
+
+For complex queries involving `AND` and `OR` groups, use the `_logic` parameter. Conditions in the URL can be given short aliases to keep the `_logic` string concise.
+
+**Syntax**: `fieldName:operator[alias]=value`
+
+- The `[alias]` is optional. If omitted, the alias defaults to the full parameter key (e.g., `fieldName:operator`).
+
+**Example 1: Simple OR**
+
+- **Goal**: Find users whose first name is 'Mario' OR last name is 'Rossi'.
+- **URL**: `?firstName:eq[fn]=Mario&lastName:eq[ln]=Rossi&_logic=(fn OR ln)`
+
+**Example 2: Complex Nested Logic**
+
+- **Goal**: Find active users from Italy OR pending users from Germany.
+  `(status:eq=active AND country:eq=IT) OR (status:eq=pending AND country:eq=DE)`
+- **URL**:
+  `?status:eq[s1]=active&country:eq[c1]=IT&status:eq[s2]=pending&country:eq[c2]=DE&_logic=((s1 AND c1) OR (s2 AND c2))`
+
+This powerful syntax allows for the construction of virtually any query structure directly from the URL.
+
+## API Reference
+
+- **`executeFindQuery(repo, relations, data, extraWhere, extraOptions)`**: The main high-level function. Handles a full find-and-count query, processes all parameters, and returns records and pagination headers.
+- **`executeCountQuery(repo, data, extraWhere)`**: A utility to only count records based on filters.
+- **`applyQuery(data, extraWhere, repo)`**: The core translation function. Takes the raw query parameters and returns a TypeORM-compatible query object.
+- **`useWhere(where, repo)`**: Translates only the filter part of the query.
+- **`useOrder(order)`**: Translates only the sorting part of the query.
+
+## License
+
+This project is licensed under the MIT License.
