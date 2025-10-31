@@ -29,7 +29,8 @@
     "build": "npm run build:esm && npm run build:cjs",
     "compile": "npm run build",
     "reset": "yarn && yarn up && yarn compile",
-    "upgrade-deps": "yarn upgrade-interactive"
+    "upgrade-deps": "yarn upgrade-interactive",
+    "combine": "node combine.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
