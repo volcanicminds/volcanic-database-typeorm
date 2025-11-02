@@ -92,6 +92,15 @@ const buildWhereFromAst = (ast: any, aliasMap: Map<string, any>) => {
   return {}
 }
 
+const typecastValue = (value: any) => {
+  if (typeof value !== 'string') return value
+  const lowerValue = value.toLowerCase()
+  if (lowerValue === 'true') return true
+  if (lowerValue === 'false') return false
+  if (lowerValue === 'null') return null
+  return value
+}
+
 export const useWhere = (where: any, repo?: any) => {
   const aliasMap = new Map<string, any>()
   const isTargetMongo = isMongo(repo)
@@ -101,8 +110,8 @@ export const useWhere = (where: any, repo?: any) => {
     ':null': (v) => (v == 'false' ? Not(IsNull()) : IsNull()),
     ':notNull': (v) => (v == 'true' ? Not(IsNull()) : IsNull()),
     ':raw': (v) => Raw((alias) => `${alias} ${v}`),
-    ':in': (v) => In(val(v).split(',')),
-    ':nin': (v) => Not(In(val(v).split(','))),
+    ':in': (v) => In(val(v).split(',').map(typecastValue)),
+    ':nin': (v) => Not(In(val(v).split(',').map(typecastValue))),
     ':likei': (v) => (isTargetMongo ? new RegExp(val(v), 'i') : ILike(`%${val(v)}%`)),
     ':containsi': (v) => (isTargetMongo ? new RegExp(val(v), 'i') : ILike(`%${val(v)}%`)),
     ':ncontainsi': (v) => (isTargetMongo ? Not(new RegExp(val(v), 'i')) : Not(ILike(`%${val(v)}%`))),
@@ -115,8 +124,11 @@ export const useWhere = (where: any, repo?: any) => {
     ':ncontains': (v) => Not(Like(`%${val(v)}%`)),
     ':starts': (v) => Like(`${val(v)}%`),
     ':ends': (v) => Like(`%${val(v)}`),
-    ':eq': (v) => (isTargetMongo ? v : Equal(v)),
-    ':neq': (v) => Not(Equal(v)),
+    ':eq': (v) => {
+      const typedValue = typecastValue(v)
+      return isTargetMongo ? typedValue : Equal(typedValue)
+    },
+    ':neq': (v) => Not(Equal(typecastValue(v))),
     ':gt': (v) => MoreThan(v),
     ':ge': (v) => MoreThanOrEqual(v),
     ':lt': (v) => LessThan(v),
