@@ -228,6 +228,10 @@ export function applyQuery(data, extraWhere, repo) {
     }
   }
 
+  if (isMongo(repo) && Array.isArray(query.where)) {
+    query.where = { $or: query.where }
+  }
+
   return query
 }
 
