@@ -50,6 +50,23 @@ export async function createUser(data: typeof global.entity.User) {
   }
 }
 
+export async function deleteUser(id: string) {
+  if (!id) {
+    return null
+  }
+
+  try {
+    const userEx = await retrieveUserById(id)
+    if (!userEx) {
+      return null
+    }
+
+    return global.entity.User.delete(id)
+  } catch (error) {
+    throw error
+  }
+}
+
 export async function resetExternalId(id: string) {
   if (!id) {
     return null
@@ -77,7 +94,7 @@ export async function updateUserById(id: string, user: typeof global.entity.User
     return null
   }
   try {
-    const userEx = await global.repository.users.findOneById(id)
+    const userEx = await retrieveUserById(id)
     if (!userEx) {
       return null
     }
