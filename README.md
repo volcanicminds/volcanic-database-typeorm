@@ -162,6 +162,10 @@ This powerful syntax allows for the construction of virtually any query structur
 - **`useWhere(where, repo)`**: Translates only the filter part of the query.
 - **`useOrder(order)`**: Translates only the sorting part of the query.
 
+## Useful scripts
+
+- 'node generate-hash.js <my-string>' : generate a new hash for a given string (used for password/testing purposes)
+
 ## License
 
 This project is licensed under the MIT License.
