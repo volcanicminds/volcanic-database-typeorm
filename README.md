@@ -7,6 +7,14 @@
 
 `@volcanicminds/typeorm` is a powerful utility library for TypeORM that dynamically translates HTTP query string parameters into complex pagination, sorting, and filtering queries. It offers a database-agnostic abstraction layer, enabling seamless operation with both SQL (e.g., PostgreSQL) and NoSQL (e.g., MongoDB) databases for most common use cases.
 
+## ⚠️ Breaking Changes in v2.x
+
+- Change package manager from yarn to npm.
+- Updated all dependencies to their latest versions.
+- Increase minimum Node.js version to 18.x.
+- Introduced support for complex boolean logic in filtering using the `_logic` parameter.
+- Enhanced filtering capabilities with additional operators and nested relation queries.
+
 ## Based on
 
 Based on [TypeORM](https://www.typeorm.io) ([GitHub](https://github.com/typeorm/typeorm)).

@@ -1,6 +1,6 @@
 {
   "name": "@volcanicminds/typeorm",
-  "version": "1.1.3",
+  "version": "2.0.0",
   "license": "MIT",
   "description": "TypeORM for the volcanic (minds) backend",
   "keywords": [
@@ -28,21 +28,21 @@
     "build:cjs": "tsc --target es2015 --module commonjs --outDir dist",
     "build": "npm run build:esm && npm run build:cjs",
     "compile": "npm run build",
-    "reset": "yarn && yarn up && yarn compile",
-    "upgrade-deps": "yarn upgrade-interactive",
+    "reset": "npm install && npm update && npm run compile",
+    "upgrade-deps": "npx npm-check-updates -u",
     "combine": "node combine.js"
   },
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "dotenv": "^16.4.5",
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
     "pluralize": "^8.0.0",
-    "reflect-metadata": "^0.1.14",
+    "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.27"
   },
   "devDependencies": {
-    "@types/node": "^18.19.59",
+    "@types/node": "^24.10.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.9.3"
   },
   "repository": {
     "type": "git",
@@ -60,6 +60,5 @@
   "directories": {
     "lib": "lib",
     "test": "test"
-  },
-  "packageManager": "yarn@4.1.0"
+  }
 }
