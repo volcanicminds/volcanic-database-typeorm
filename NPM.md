@@ -14,11 +14,11 @@ npm publish --access public
 ## local linking
 
 ```ruby
-yarn link
-yarn link "@volcanicminds/typeorm"
+npm link
+npm link "@volcanicminds/typeorm"
 ```
 
 ```ruby
-yarn unlink
-yarn unlink "@volcanicminds/typeorm"
+npm unlink
+npm unlink "@volcanicminds/typeorm"
 ```

@@ -11,7 +11,7 @@
 
 - Change package manager from yarn to npm.
 - Updated all dependencies to their latest versions.
-- Increase minimum Node.js version to 18.x.
+- Increase minimum Node.js version to 24.x.
 - Introduced support for complex boolean logic in filtering using the `_logic` parameter.
 - Enhanced filtering capabilities with additional operators and nested relation queries.
 
