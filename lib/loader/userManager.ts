@@ -14,7 +14,7 @@ export async function createUser(data: typeof global.entity.User) {
   const { username, email, password } = data
 
   if (!email || !password) {
-    return null
+    throw new Error('Email or password missing')
   }
 
   const salt = await bcrypt.genSalt(12)
@@ -52,13 +52,13 @@ export async function createUser(data: typeof global.entity.User) {
 
 export async function deleteUser(id: string) {
   if (!id) {
-    return null
+    throw new Error('Invalid parameters')
   }
 
   try {
     const userEx = await retrieveUserById(id)
     if (!userEx) {
-      return null
+      throw new Error('User not found')
     }
 
     return global.entity.User.delete(id)
@@ -69,7 +69,7 @@ export async function deleteUser(id: string) {
 
 export async function resetExternalId(id: string) {
   if (!id) {
-    return null
+    throw new Error('Invalid parameters')
   }
 
   try {
@@ -91,12 +91,12 @@ export async function resetExternalId(id: string) {
 
 export async function updateUserById(id: string, user: typeof global.entity.User) {
   if (!id || !user) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     const userEx = await retrieveUserById(id)
     if (!userEx) {
-      return null
+      throw new Error('User not found')
     }
     const merged = global.repository.users.merge(userEx, user)
     return await global.entity.User.save(merged)
@@ -107,7 +107,7 @@ export async function updateUserById(id: string, user: typeof global.entity.User
 
 export async function retrieveUserById(id: string) {
   if (!id) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     return await global.repository.users.findOneById(id)
@@ -118,7 +118,7 @@ export async function retrieveUserById(id: string) {
 
 export async function retrieveUserByEmail(email: string) {
   if (!email) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     return await global.repository.users.findOneBy({ email: email })
@@ -129,7 +129,7 @@ export async function retrieveUserByEmail(email: string) {
 
 export async function retrieveUserByUsername(username: string) {
   if (!username) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     return await global.repository.users.findOneBy({ username })
@@ -140,7 +140,7 @@ export async function retrieveUserByUsername(username: string) {
 
 export async function retrieveUserByConfirmationToken(code: string) {
   if (!code) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     return await global.repository.users.findOneBy({ confirmationToken: code })
@@ -151,7 +151,7 @@ export async function retrieveUserByConfirmationToken(code: string) {
 
 export async function retrieveUserByResetPasswordToken(code: string) {
   if (!code) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     return await global.repository.users.findOneBy({ resetPasswordToken: code })
@@ -162,7 +162,7 @@ export async function retrieveUserByResetPasswordToken(code: string) {
 
 export async function retrieveUserByExternalId(externalId: string) {
   if (!externalId) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     return await global.repository.users.findOne({
@@ -176,12 +176,12 @@ export async function retrieveUserByExternalId(externalId: string) {
 
 export async function retrieveUserByPassword(email: string, password: string) {
   if (!email || !password) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     const user = await global.repository.users.findOneBy({ email: email })
     if (!user) {
-      return null
+      throw new Error('User not found')
     }
     const match = await bcrypt.compare(password, user.password)
     return match ? user : null
@@ -192,7 +192,7 @@ export async function retrieveUserByPassword(email: string, password: string) {
 
 export async function changePassword(email: string, password: string, oldPassword: string) {
   if (!email || !password || !oldPassword) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     const user = await global.repository.users.findOneBy({ email: email })
@@ -210,7 +210,7 @@ export async function changePassword(email: string, password: string, oldPasswor
 
 export async function forgotPassword(email: string) {
   if (!email) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     const user = await global.repository.users.findOneBy({ email: email })
@@ -229,7 +229,7 @@ export async function forgotPassword(email: string) {
 
 export async function resetPassword(user: typeof global.entity.User, password: string) {
   if (!user || !password) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     const salt = await bcrypt.genSalt(12)
@@ -249,7 +249,7 @@ export async function resetPassword(user: typeof global.entity.User, password: s
 
 export async function userConfirmation(user: typeof global.entity.User) {
   if (!user) {
-    return null
+    throw new Error('Invalid parameters')
   }
   try {
     return await global.entity.User.save({ ...user, confirmed: true, confirmedAt: new Date(), confirmationToken: null })
