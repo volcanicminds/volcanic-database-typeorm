@@ -1,6 +1,6 @@
 # hot to test
 
-```ruby
+```zsh
 docker pull postgres:latest
 
 # without data mount
@@ -14,7 +14,7 @@ docker run -itd -e POSTGRES_USER=vminds -e POSTGRES_PASSWORD=vminds -p 5432:5432
 
 # pgAdmin
 
-```ruby
+```zsh
 
 docker pull dpage/pgadmin4:latest
 
