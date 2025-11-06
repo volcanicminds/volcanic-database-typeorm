@@ -34,7 +34,7 @@ And, what you see in [package.json](package.json).
 ## Installation
 
 ```sh
-yarn add @volcanicminds/typeorm
+npm install @volcanicminds/typeorm
 ```
 
 ## Core Concept
