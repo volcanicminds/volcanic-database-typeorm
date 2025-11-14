@@ -12,7 +12,15 @@ import * as dataBaseManager from './lib/loader/dataBaseManager'
 import { User } from './lib/entities/user'
 import { Token } from './lib/entities/token'
 import { Change } from './lib/entities/change'
-import { applyQuery, executeCountQuery, executeFindQuery, useOrder, useWhere } from './lib/query'
+import {
+  applyQuery,
+  executeCountQuery,
+  executeCountView,
+  executeFindQuery,
+  executeFindView,
+  useOrder,
+  useWhere
+} from './lib/query'
 import * as log from './lib/util/logger'
 import yn from './lib/util/yn'
 
@@ -100,7 +108,9 @@ export {
   DataSource,
   applyQuery,
   executeCountQuery,
+  executeCountView,
   executeFindQuery,
+  executeFindView,
   useOrder,
   useWhere
 }
@@ -115,7 +125,9 @@ module.exports = {
   dataBaseManager,
   applyQuery,
   executeCountQuery,
+  executeCountView,
   executeFindQuery,
+  executeFindView,
   useOrder,
   useWhere
 }

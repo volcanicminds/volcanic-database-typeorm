@@ -205,9 +205,34 @@ export async function executeFindQuery(
   }
 }
 
+export async function executeFindView(viewEntity: any, data: any = {}, extraWhere: any = {}, extraOptions: any = {}) {
+  const extra = applyQuery(data, extraWhere, null)
+
+  const [records = [], totalCount] = await global.connection.manager.findAndCount(viewEntity, {
+    ...extra,
+    ...extraOptions
+  })
+
+  return {
+    records,
+    headers: {
+      'v-count': records.length,
+      'v-total': totalCount,
+      'v-page': data.page || 1,
+      'v-pageSize': extra.take,
+      'v-pageCount': Math.ceil(extra.take ? totalCount / extra.take : 1)
+    }
+  }
+}
+
 export async function executeCountQuery(repo: any, data = {}, extraWhere: any = {}) {
   const { where = {} } = applyQuery(data, extraWhere, repo)
   return await repo.count(isMongo(repo) ? where : { where: where })
+}
+
+export async function executeCountView(viewEntity: any, data = {}, extraWhere: any = {}) {
+  const { where = {} } = applyQuery(data, extraWhere, null)
+  return await global.connection.manager.count(viewEntity, { where: where })
 }
 
 function getType(repo) {
