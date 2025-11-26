@@ -1,4 +1,4 @@
-import * as log from '../util/logger'
+import * as log from '../util/logger.js'
 
 export function isImplemented() {
   return true

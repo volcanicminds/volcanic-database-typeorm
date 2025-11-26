@@ -1,6 +1,12 @@
-const path = require('path')
-const glob = require('glob')
-const pluralize = require('pluralize')
+import * as path from 'path'
+import { globSync } from 'glob'
+import pluralize from 'pluralize'
+import { createRequire } from 'module'
+import { fileURLToPath } from 'url'
+
+const require = createRequire(import.meta.url)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 export function load() {
   const classes: any = {}
@@ -13,7 +19,7 @@ export function load() {
   ]
 
   patterns.forEach((pattern) => {
-    glob.sync(pattern, { nodir: true, nosort: true, stat: false }).forEach((f: string) => {
+    globSync(pattern, { nodir: true, windowsPathsNoEscape: true }).forEach((f: string) => {
       const entityClass = require(f)
       const entityNames = Object.keys(entityClass)
 

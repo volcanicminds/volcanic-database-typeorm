@@ -12,8 +12,8 @@ import {
   LessThan,
   LessThanOrEqual
 } from 'typeorm'
-import { parseLogicExpression } from './query/parser'
-import { buildWhereFromAst } from './query/builder'
+import { parseLogicExpression } from './query/parser.js'
+import { buildWhereFromAst } from './query/builder.js'
 
 const evalOrder = (val: string = '') => (['desc', 'd', 'false', '1'].includes(val.toLowerCase()) ? 'desc' : 'asc')
 

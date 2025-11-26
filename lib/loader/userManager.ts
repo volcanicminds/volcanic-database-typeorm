@@ -1,6 +1,6 @@
 import * as bcrypt from 'bcrypt'
-const Crypto = require('crypto')
-import { executeCountQuery, executeFindQuery } from '../query'
+import * as Crypto from 'crypto'
+import { executeCountQuery, executeFindQuery } from '../query.js'
 
 export function isImplemented() {
   return true

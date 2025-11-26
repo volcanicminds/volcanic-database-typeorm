@@ -1,17 +1,15 @@
-'use strict'
-
 import dotenv from 'dotenv'
 dotenv.config()
 
 import 'reflect-metadata'
 import { DataSource } from 'typeorm'
-import * as loaderEntities from './lib/loader/entities'
-import * as userManager from './lib/loader/userManager'
-import * as tokenManager from './lib/loader/tokenManager'
-import * as dataBaseManager from './lib/loader/dataBaseManager'
-import { User } from './lib/entities/user'
-import { Token } from './lib/entities/token'
-import { Change } from './lib/entities/change'
+import * as loaderEntities from './lib/loader/entities.js'
+import * as userManager from './lib/loader/userManager.js'
+import * as tokenManager from './lib/loader/tokenManager.js'
+import * as dataBaseManager from './lib/loader/dataBaseManager.js'
+import { User } from './lib/entities/user.js'
+import { Token } from './lib/entities/token.js'
+import { Change } from './lib/entities/change.js'
 import {
   applyQuery,
   executeCountQuery,
@@ -20,13 +18,13 @@ import {
   executeFindView,
   useOrder,
   useWhere
-} from './lib/query'
-import * as log from './lib/util/logger'
-import yn from './lib/util/yn'
+} from './lib/query.js'
+import * as log from './lib/util/logger.js'
+import yn from './lib/util/yn.js'
 
 async function start(options) {
   return new Promise<DataSource>((resolve, reject) => {
-    if (global.npmDebugServerStarted) {
+    if ((global as any).npmDebugServerStarted) {
       options = {
         type: 'postgres',
         host: '127.0.0.1',
@@ -59,20 +57,14 @@ async function start(options) {
         ? 'error'
         : LOG_DB_LEVEL
 
-    global.cacheTimeout = options?.cacheTimeout || 30000 // milliseconds
-    global.isLoggingEnabled = options?.logging || true
+    ;(global as any).cacheTimeout = options?.cacheTimeout || 30000 // milliseconds
+    ;(global as any).isLoggingEnabled = options?.logging || true
 
     const { classes, repositories, entities } = loaderEntities.load()
     options.entities = [...(options.entities || []), ...(entities || [])]
     options.logger = LOG_COLORIZE ? 'advanced-console' : 'simple-console'
     options.logging = logLevel
     options.synchronize = false
-
-    // options.entities = [
-    //   ...(options.entities || []),
-    //   `${__dirname}/lib/entities/*.e.{ts,js}`,
-    //   `${process.cwd()}/src/entities/*.e.{ts,js}`
-    // ]
 
     return new DataSource(options)
       .initialize()
@@ -86,17 +78,16 @@ async function start(options) {
         // load uselful stuff
         const repository = {}
         Object.keys(repositories).map((r) => (repository[r] = ds.getRepository(repositories[r])))
-
-        global.connection = ds
-        global.entity = classes
-        global.repository = repository
+        ;(global as any).connection = ds
+        ;(global as any).entity = classes
+        ;(global as any).repository = repository
         return resolve(ds)
       })
       .catch((error) => reject(error))
   })
 }
 
-export { Database } from './types/global'
+export { Database } from './types/global.js'
 export {
   start,
   User,
@@ -106,23 +97,6 @@ export {
   tokenManager,
   dataBaseManager,
   DataSource,
-  applyQuery,
-  executeCountQuery,
-  executeCountView,
-  executeFindQuery,
-  executeFindView,
-  useOrder,
-  useWhere
-}
-
-module.exports = {
-  start,
-  User,
-  Token,
-  Change,
-  userManager,
-  tokenManager,
-  dataBaseManager,
   applyQuery,
   executeCountQuery,
   executeCountView,

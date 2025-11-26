@@ -1,31 +1,36 @@
 {
   "name": "@volcanicminds/typeorm",
-  "version": "2.0.1",
+  "version": "2.1.0",
+  "type": "module",
   "license": "MIT",
   "description": "TypeORM for the volcanic (minds) backend",
   "keywords": [
     "volcanic",
-    "open source",
     "database",
     "typeorm",
     "typescript",
-    "javascript"
+    "esm"
   ],
   "main": "dist/index.js",
-  "module": "esm/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
   "files": [
     "dist",
-    "esm",
-    "src"
+    "lib"
   ],
   "scripts": {
-    "clean": "rm -rf dist esm",
+    "clean": "rm -rf dist",
     "prebuild": "npm run clean",
-    "build:esm": "tsc --target es2018 --outDir esm",
-    "build:cjs": "tsc --target es2015 --module commonjs --outDir dist",
-    "build": "npm run build:esm && npm run build:cjs",
-    "compile": "npm run build",
-    "reset": "npm install && npm update && npm run compile",
+    "build": "tsc",
+    "reset": "npm install && npm update && npm run build",
     "upgrade-deps": "npx npm-check-updates -u",
     "combine": "node combine.js"
   },
@@ -38,25 +43,12 @@
   },
   "devDependencies": {
     "@types/node": "^24.10.0",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2",
     "typescript": "^5.9.3"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/volcanicminds/volcanic-database-typeorm.git"
-  },
-  "homepage": "https://volcanicminds.com",
-  "bugs": {
-    "url": "https://github.com/volcanicminds/volcanic-backend/issues"
-  },
-  "author": "Volcanic Minds <developers@volcanicminds.com> (https://volcanicminds.com)",
-  "maintainers": [
-    "Developers <developers@volcanicminds.com> (https://volcanicminds.com)"
-  ],
-  "types": "./dist/index.d.ts",
-  "directories": {
-    "lib": "lib",
-    "test": "test"
   },
   "engines": {
     "node": ">=24"

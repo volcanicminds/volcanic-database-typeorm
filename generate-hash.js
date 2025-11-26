@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt')
+import * as bcrypt from 'bcrypt'
 
 async function generateHash() {
   const password = process.argv[2]
