@@ -1,4 +1,5 @@
 import * as Crypto from 'crypto'
+import { ServiceError } from '../util/error.js'
 import { executeCountQuery, executeFindQuery } from '../query.js'
 
 export function isImplemented() {
@@ -13,7 +14,7 @@ export async function createToken(data: typeof global.entity.Token) {
   const { name, description } = data
 
   if (!name) {
-    return null
+    throw new ServiceError('Invalid parameters', 400)
   }
 
   try {
@@ -41,7 +42,7 @@ export async function createToken(data: typeof global.entity.Token) {
 
 export async function resetExternalId(id: string) {
   if (!id) {
-    return null
+    throw new ServiceError('Invalid parameters', 400)
   }
 
   try {
@@ -63,12 +64,12 @@ export async function resetExternalId(id: string) {
 
 export async function updateTokenById(id: string, token: typeof global.entity.Token) {
   if (!id || !token) {
-    return null
+    throw new ServiceError('Invalid parameters', 400)
   }
   try {
     const tokenEx = await global.repository.tokens.findOneById(id)
     if (!tokenEx) {
-      return null
+      throw new ServiceError('Token not found', 404)
     }
     const merged = global.repository.tokens.merge(tokenEx, token)
     return await global.entity.Token.save(merged)
@@ -79,7 +80,7 @@ export async function updateTokenById(id: string, token: typeof global.entity.To
 
 export async function retrieveTokenById(id: string) {
   if (!id) {
-    return null
+    throw new ServiceError('Invalid parameters', 400)
   }
   try {
     return await global.repository.tokens.findOneById(id)
@@ -90,7 +91,7 @@ export async function retrieveTokenById(id: string) {
 
 export async function retrieveTokenByExternalId(externalId: string) {
   if (!externalId) {
-    return null
+    throw new ServiceError('Invalid parameters', 400)
   }
   try {
     return await global.repository.tokens.findOneBy({ externalId: externalId })
@@ -117,7 +118,7 @@ export async function findQuery(data: any) {
 
 export async function removeTokenById(id: string) {
   if (!id) {
-    return null
+    throw new ServiceError('Invalid parameters', 400)
   }
   try {
     return await global.repository.tokens.delete(id)
