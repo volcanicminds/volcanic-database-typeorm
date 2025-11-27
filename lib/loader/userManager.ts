@@ -2,6 +2,7 @@ import * as bcrypt from 'bcrypt'
 import * as Crypto from 'crypto'
 import { ServiceError } from '../util/error.js'
 import { executeCountQuery, executeFindQuery } from '../query.js'
+import { encrypt, decrypt } from '../util/crypto.js'
 
 export function isImplemented() {
   return true
@@ -39,7 +40,11 @@ export async function createUser(data: typeof global.entity.User) {
       externalId: externalId,
       email: email,
       username: username || email,
-      password: hashedPassword
+      password: hashedPassword,
+      mfaEnabled: false,
+      mfaSecret: null,
+      mfaType: 'TOTP',
+      mfaRecoveryCodes: []
     } as typeof global.entity.User)
 
     return await global.entity.User.save(user)
@@ -80,7 +85,6 @@ export async function resetExternalId(id: string) {
       user = await global.repository.users.findOneBy({ externalId: externalId })
     } while (user != null)
 
-    // TODO: use externalId instead id
     return await updateUserById(id, { externalId: externalId })
   } catch (error) {
     if (error?.code == 23505) {
@@ -301,4 +305,44 @@ export async function findQuery(data: any) {
 export async function disableUserById(id: string) {
   await updateUserById(id, { blocked: true, blockedAt: new Date(), blockedReason: 'User disabled to unregister' })
   return resetExternalId(id)
+}
+
+// MFA Persistence Methods (Only DB operations, NO tools import)
+
+export async function saveMfaSecret(userId: string, secret: string) {
+  if (!userId || !secret) {
+    throw new ServiceError('Invalid parameters', 400)
+  }
+  const encryptedSecret = encrypt(secret)
+
+  await updateUserById(userId, {
+    mfaSecret: encryptedSecret,
+    mfaType: 'TOTP'
+  })
+  return true
+}
+
+export async function retrieveMfaSecret(userId: string) {
+  if (!userId) throw new ServiceError('Invalid parameters', 400)
+
+  // Force selection of mfaSecret which is hidden by default in standard queries
+  const user = await global.repository.users
+    .createQueryBuilder('user')
+    .addSelect('user.mfaSecret')
+    .where('user.id = :id', { id: userId })
+    .getOne()
+
+  if (!user || !user.mfaSecret) return null
+
+  return decrypt(user.mfaSecret)
+}
+
+export async function enableMfa(userId: string) {
+  if (!userId) throw new ServiceError('Invalid parameters', 400)
+  return await updateUserById(userId, { mfaEnabled: true })
+}
+
+export async function disableMfa(userId: string) {
+  if (!userId) throw new ServiceError('Invalid parameters', 400)
+  return await updateUserById(userId, { mfaEnabled: false, mfaSecret: null, mfaRecoveryCodes: [] })
 }
