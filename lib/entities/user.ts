@@ -19,6 +19,13 @@ export abstract class User extends BaseEntity {
   abstract createdAt: Date
   abstract updatedAt: Date
   abstract deletedAt: Date
+
+  // MFA Fields
+  abstract mfaEnabled: boolean
+  abstract mfaSecret: string
+  abstract mfaType: string
+  abstract mfaRecoveryCodes: string[]
+
   abstract setId(id: any)
   abstract getId(): any
 }
