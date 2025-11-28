@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export interface Database {
   default: any
   [option: string]: any
@@ -32,6 +33,9 @@ export interface UserManagement {
   retrieveMfaSecret(userId: string): Promise<string | null>
   enableMfa(userId: string): Promise<boolean>
   disableMfa(userId: string): Promise<boolean>
+
+  // Emergency Reset
+  forceDisableMfaForAdmin(email: string): Promise<boolean>
 }
 
 export interface TokenManagement {

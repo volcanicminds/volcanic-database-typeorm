@@ -1,3 +1,5 @@
+/* eslint-disable no-useless-catch */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as bcrypt from 'bcrypt'
 import * as Crypto from 'crypto'
 import { ServiceError } from '../util/error.js'
@@ -307,7 +309,7 @@ export async function disableUserById(id: string) {
   return resetExternalId(id)
 }
 
-// MFA Persistence Methods (Only DB operations, NO tools import)
+// MFA Persistence Methods
 
 export async function saveMfaSecret(userId: string, secret: string) {
   if (!userId || !secret) {
@@ -325,7 +327,6 @@ export async function saveMfaSecret(userId: string, secret: string) {
 export async function retrieveMfaSecret(userId: string) {
   if (!userId) throw new ServiceError('Invalid parameters', 400)
 
-  // Force selection of mfaSecret which is hidden by default in standard queries
   const user = await global.repository.users
     .createQueryBuilder('user')
     .addSelect('user.mfaSecret')
@@ -345,4 +346,31 @@ export async function enableMfa(userId: string) {
 export async function disableMfa(userId: string) {
   if (!userId) throw new ServiceError('Invalid parameters', 400)
   return await updateUserById(userId, { mfaEnabled: false, mfaSecret: null, mfaRecoveryCodes: [] })
+}
+
+export async function forceDisableMfaForAdmin(email: string) {
+  if (!email) return false
+
+  const userRepo = global.repository.users
+
+  const user = await userRepo.findOneBy({ email: email })
+  if (!user) {
+    return false
+  }
+
+  // Verify admin role (supports array of strings)
+  const hasAdmin =
+    user.roles && (user.roles.includes('admin') || user.roles.some((r) => r === 'admin' || r.code === 'admin'))
+
+  if (!hasAdmin) {
+    return false
+  }
+
+  await updateUserById(user.id, {
+    mfaEnabled: false,
+    mfaSecret: null,
+    mfaRecoveryCodes: []
+  })
+
+  return true
 }

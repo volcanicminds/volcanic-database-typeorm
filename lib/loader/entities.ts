@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as path from 'path'
 import { globSync } from 'glob'
 import pluralize from 'pluralize'

@@ -1,3 +1,4 @@
+/* eslint-disable no-useless-catch */
 import * as log from '../util/logger.js'
 
 export function isImplemented() {

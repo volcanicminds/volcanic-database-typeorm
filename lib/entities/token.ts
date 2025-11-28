@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { BaseEntity } from 'typeorm'
 
 export abstract class Token extends BaseEntity {

@@ -1,6 +1,6 @@
 {
   "name": "@volcanicminds/typeorm",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "type": "module",
   "license": "MIT",
   "description": "TypeORM for the volcanic (minds) backend",
@@ -32,6 +32,10 @@
     "build": "tsc",
     "reset": "npm install && npm update && npm run build",
     "upgrade-deps": "npx npm-check-updates -u",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit",
+    "check-all": "npm run lint && npm run type-check",
     "combine": "node combine.js"
   },
   "dependencies": {
@@ -43,9 +47,13 @@
     "typeorm": "^0.3.27"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.0",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.0"
   },
   "repository": {
     "type": "git",

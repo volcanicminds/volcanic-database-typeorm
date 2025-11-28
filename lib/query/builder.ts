@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const combineSqlAnd = (left, right) => {
   if (Array.isArray(left) || Array.isArray(right)) {
     throw new Error('Combining OR conditions with AND is not supported in this simplified SQL builder.')
