@@ -1,6 +1,6 @@
 {
   "name": "@volcanicminds/typeorm",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "type": "module",
   "license": "MIT",
   "description": "TypeORM for the volcanic (minds) backend",
@@ -37,6 +37,7 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
+    "glob": "^13.0.0",
     "pluralize": "^8.0.0",
     "reflect-metadata": "^0.2.2",
     "typeorm": "^0.3.27"
