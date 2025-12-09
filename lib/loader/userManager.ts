@@ -225,6 +225,7 @@ export async function forgotPassword(email: string) {
     if (user) {
       return await global.entity.User.save({
         ...user,
+        resetPasswordTokenAt: new Date(),
         resetPasswordToken: Crypto.randomBytes(64).toString('hex')
       })
     }

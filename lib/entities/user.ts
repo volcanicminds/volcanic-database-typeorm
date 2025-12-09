@@ -14,6 +14,7 @@ export abstract class User extends BaseEntity {
   abstract blockedReason: string
   abstract blockedAt: Date
   abstract resetPasswordToken: string
+  abstract resetPasswordTokenAt: Date
   abstract confirmationToken: string
   abstract roles: string[]
   abstract version: number
@@ -27,6 +28,6 @@ export abstract class User extends BaseEntity {
   abstract mfaType: string
   abstract mfaRecoveryCodes: string[]
 
-  abstract setId(id: any)
+  abstract setId(id: any): void
   abstract getId(): any
 }
