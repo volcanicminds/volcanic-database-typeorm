@@ -236,14 +236,19 @@ export async function forgotPassword(email: string) {
 }
 
 export async function resetPassword(user: typeof global.entity.User, password: string) {
-  if (!user || !password) {
+  if (!user || !password || !user?.email) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
+    const userEx = await global.repository.users.findOneBy({ email: user.email })
+    if (!userEx) {
+      throw new Error('Wrong credentials')
+    }
+
     const salt = await bcrypt.genSalt(12)
     const hashedPassword = await bcrypt.hash(password, salt)
     return await global.entity.User.save({
-      ...user,
+      ...userEx,
       passwordChangedAt: new Date(),
       confirmed: true,
       confirmedAt: new Date(),
