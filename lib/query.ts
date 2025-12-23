@@ -87,6 +87,15 @@ export const useWhere = (where: any, repo?: any) => {
     ':between': (v) => {
       const s = v?.split(':')
       return s?.length == 2 ? Between(s[0], s[1]) : v
+    },
+    ':overlap': (v) => {
+      const values = val(v).split(',').map(typecastValue)
+      if (isTargetMongo) {
+        // MongoDB: usa $in per trovare documenti dove l'array contiene almeno uno dei valori
+        return { $in: values }
+      }
+      // PostgreSQL: usa l'operatore && per array overlap
+      return Raw((alias) => `${alias} && ARRAY[:...overlapValues]::text[]`, { overlapValues: values })
     }
   }
 

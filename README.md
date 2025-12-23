@@ -123,6 +123,7 @@ Filters are applied by using `fieldName:operator=value`. If no operator is speci
 | `:lt`, `:le` | Less than / Less than or equal       | `...&price:lt=99.99`                          |     ✅     |   ✅    |
 | `:in`        | Included in an array (comma-sep.)    | `...&status:in=active,pending`                |     ✅     |   ✅    |
 | `:nin`       | Not included in an array             | `...&category:nin=old,obsolete`               |     ✅     |   ✅    |
+| `:overlap`   | Array overlap (has common elements)  | `...&companies:overlap=acme,globex`           |     ✅     |   ✅    |
 | `:between`   | Is between two values (colon-sep.)   | `...&createdAt:between=2024-01-01:2024-12-31` |     ✅     |   ✅    |
 | `:null`      | Is null                              | `...&deletedAt:null=true`                     |     ✅     |   ✅    |
 | `:notNull`   | Is not null                          | `...&updatedAt:notNull=true`                  |     ✅     |   ✅    |
