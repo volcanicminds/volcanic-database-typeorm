@@ -1,10 +1,13 @@
 import * as crypto from 'crypto'
 
 const ALGORITHM = 'aes-256-cbc'
-const SECRET_KEY = process.env.MFA_DB_SECRET || process.env.JWT_SECRET || 'default_secret_must_be_changed_32b'
+const SECRET_KEY = process.env.MFA_DB_SECRET || process.env.JWT_SECRET
 const IV_LENGTH = 16
 
 function getKey() {
+  if (!SECRET_KEY) {
+    throw new Error('Secret key is not defined in environment variables.')
+  }
   return crypto.createHash('sha256').update(String(SECRET_KEY)).digest('base64').substr(0, 32)
 }
 
