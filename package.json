@@ -1,6 +1,6 @@
 {
   "name": "@volcanicminds/typeorm",
-  "version": "2.2.8",
+  "version": "2.2.9",
   "type": "module",
   "license": "MIT",
   "description": "TypeORM for the volcanic (minds) backend",

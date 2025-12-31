@@ -34,7 +34,8 @@ const escapeRegExp = (string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-const hasProtoRisk = (str: string) => hasProtoRisk(str)
+const hasProtoRisk = (str: string) =>
+  ['__proto__', 'constructor', 'prototype', 'toString', 'valueOf', 'toLocaleString'].includes(str)
 
 export const useOrder = (order: string[] = []) => {
   const result = {}
