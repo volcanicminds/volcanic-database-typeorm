@@ -14,10 +14,27 @@ import {
   LessThan,
   LessThanOrEqual
 } from 'typeorm'
+import yn from './util/yn.js'
+import * as log from './util/logger.js'
 import { parseLogicExpression } from './query/parser.js'
 import { buildWhereFromAst } from './query/builder.js'
 
+let sensitiveFields = ['password', 'mfaSecret', 'resetPasswordToken', 'confirmationToken']
+
+export const configureSensitiveFields = (fields: string[]) => {
+  if (fields && Array.isArray(fields)) {
+    log.info(`Volcanic-TypeORM: Overrided sensitive fields: ${fields.join(', ')}`)
+    sensitiveFields = fields
+  }
+}
+
 const evalOrder = (val: string = '') => (['desc', 'd', 'false', '1'].includes(val.toLowerCase()) ? 'desc' : 'asc')
+
+const escapeRegExp = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+const hasProtoRisk = (str: string) => hasProtoRisk(str)
 
 export const useOrder = (order: string[] = []) => {
   const result = {}
@@ -31,10 +48,17 @@ export const useOrder = (order: string[] = []) => {
       let target = result
       while (fieldFullPath.length > 1) {
         const fieldPath: string = fieldFullPath.shift() || ''
+        if (hasProtoRisk(fieldPath)) {
+          continue
+        }
+
         target = target[fieldPath] = target[fieldPath] || {}
       }
 
       const fieldName = fieldFullPath[0]
+      if (hasProtoRisk(fieldName)) {
+        return
+      }
 
       target[fieldName] = sortType
     })
@@ -59,16 +83,15 @@ export const useWhere = (where: any, repo?: any) => {
   const reservedOperators = {
     ':null': (v) => (typecastValue(v) === false ? Not(IsNull()) : IsNull()),
     ':notNull': (v) => (typecastValue(v) === true ? Not(IsNull()) : IsNull()),
-    ':raw': (v) => Raw((alias) => `${alias} ${v}`),
     ':in': (v) => In(val(v).split(',').map(typecastValue)),
     ':nin': (v) => Not(In(val(v).split(',').map(typecastValue))),
-    ':likei': (v) => (isTargetMongo ? new RegExp(val(v), 'i') : ILike(`%${val(v)}%`)),
-    ':containsi': (v) => (isTargetMongo ? new RegExp(val(v), 'i') : ILike(`%${val(v)}%`)),
-    ':ncontainsi': (v) => (isTargetMongo ? Not(new RegExp(val(v), 'i')) : Not(ILike(`%${val(v)}%`))),
-    ':startsi': (v) => (isTargetMongo ? new RegExp(`^${val(v)}`, 'i') : ILike(`${val(v)}%`)),
-    ':endsi': (v) => (isTargetMongo ? new RegExp(`${val(v)}$`, 'i') : ILike(`%${val(v)}`)),
-    ':eqi': (v) => (isTargetMongo ? new RegExp(`^${val(v)}$`, 'i') : ILike(v)),
-    ':neqi': (v) => (isTargetMongo ? Not(new RegExp(`^${val(v)}$`, 'i')) : Not(ILike(v))),
+    ':likei': (v) => (isTargetMongo ? new RegExp(escapeRegExp(val(v)), 'i') : ILike(`%${val(v)}%`)),
+    ':containsi': (v) => (isTargetMongo ? new RegExp(escapeRegExp(val(v)), 'i') : ILike(`%${val(v)}%`)),
+    ':ncontainsi': (v) => (isTargetMongo ? Not(new RegExp(escapeRegExp(val(v)), 'i')) : Not(ILike(`%${val(v)}%`))),
+    ':startsi': (v) => (isTargetMongo ? new RegExp(`^${escapeRegExp(val(v))}`, 'i') : ILike(`${val(v)}%`)),
+    ':endsi': (v) => (isTargetMongo ? new RegExp(`${escapeRegExp(val(v))}$`, 'i') : ILike(`%${val(v)}`)),
+    ':eqi': (v) => (isTargetMongo ? new RegExp(`^${escapeRegExp(val(v))}$`, 'i') : ILike(v)),
+    ':neqi': (v) => (isTargetMongo ? Not(new RegExp(`^${escapeRegExp(val(v))}$`, 'i')) : Not(ILike(v))),
     ':like': (v) => Like(`${val(v)}`),
     ':contains': (v) => Like(`%${val(v)}%`),
     ':ncontains': (v) => Not(Like(`%${val(v)}%`)),
@@ -91,12 +114,15 @@ export const useWhere = (where: any, repo?: any) => {
     ':overlap': (v) => {
       const values = val(v).split(',').map(typecastValue)
       if (isTargetMongo) {
-        // MongoDB: usa $in per trovare documenti dove l'array contiene almeno uno dei valori
         return { $in: values }
       }
-      // PostgreSQL: usa l'operatore && per array overlap
       return Raw((alias) => `${alias} && ARRAY[:...overlapValues]::text[]`, { overlapValues: values })
     }
+  }
+
+  if (yn(process.env.VOLCANIC_CUSTOM_QUERY_OPERATORS, false)) {
+    log.warn('Volcanic-TypeORM: Custom query operators (:raw) enabled. SECURITY RISK!')
+    reservedOperators[':raw'] = (v) => Raw((alias) => `${alias} ${v}`)
   }
 
   const reservedWords = Object.keys(reservedOperators).join('|')
@@ -107,6 +133,9 @@ export const useWhere = (where: any, repo?: any) => {
   for (const rawKey in where) {
     let alias = ''
     let key = rawKey
+    if (hasProtoRisk(rawKey)) {
+      continue
+    }
 
     const aliasMatch = rawKey.match(aliasRegex)
     if (aliasMatch) {
@@ -120,8 +149,12 @@ export const useWhere = (where: any, repo?: any) => {
     const operator = m?.length ? m[0] : ':eq'
     const fullPath = key.replace(operator, '')
     const parts = fullPath.split('.')
-    let value = where[rawKey]
 
+    if (sensitiveFields.some((field) => fullPath.includes(field))) {
+      continue
+    }
+
+    let value = where[rawKey]
     if (operator && reservedOperators[operator]) {
       value = reservedOperators[operator](value)
     }
@@ -130,12 +163,19 @@ export const useWhere = (where: any, repo?: any) => {
     let target = condition
     while (parts.length > 1) {
       const part: string = parts.shift() || ''
+      if (hasProtoRisk(part)) {
+        break
+      }
+
       target = target[part] = target[part] || {}
     }
-    target[parts[0]] = value
 
-    aliasMap.set(alias, condition)
-    Object.assign(allConditions, condition)
+    const finalFieldName = parts[0]
+    if (!hasProtoRisk(finalFieldName)) {
+      target[finalFieldName] = value
+      aliasMap.set(alias, condition)
+      Object.assign(allConditions, condition)
+    }
   }
 
   return { allConditions, aliasMap }

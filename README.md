@@ -15,6 +15,9 @@
 - Switched to pure ECMAScript Modules (`NodeNext`). CommonJS/`require` is no longer supported.
 - Introduced support for complex boolean logic in filtering using the `_logic` parameter.
 - Enhanced filtering capabilities with additional operators and nested relation queries.
+- **Security Update**: The `:raw` operator is now **disabled by default**. To enable it, you must set `VOLCANIC_CUSTOM_QUERY_OPERATORS=true` in your environment variables. Please use this operator with **extreme caution** to avoid SQL injection vulnerabilities.
+- **Security Update**: Added protection against Prototype Pollution and ReDoS attacks.
+- **Security Update**: Filters on sensitive fields (e.g., `password`, `mfaSecret`) are now blocked by default.
 
 ## Based on
 
@@ -31,6 +34,7 @@ And, what you see in [package.json](package.json).
 - **Complex Boolean Logic**: Construct intricate queries with nested `AND` and `OR` conditions using a powerful `_logic` parameter.
 - **Hybrid Database Support**: Write a single API endpoint that works transparently with both PostgreSQL and MongoDB for standard queries.
 - **Standalone or Integrated**: Use it as a standalone utility with any Node.js framework or enjoy seamless integration with `@volcanicminds/backend`.
+- **Security Hardening**: Built-in protections against SQL Injection (via strict operator control), Prototype Pollution, and ReDoS.
 
 ## Installation
 
@@ -47,6 +51,22 @@ The library's main purpose is to bridge the gap between flat HTTP query strings 
 This allows you to build flexible and powerful data APIs with minimal boilerplate.
 
 ## Usage
+
+### Configuration (Optional)
+
+You can customize the list of sensitive fields that should be blocked from filtering during the initialization.
+
+```typescript
+import { start } from '@volcanicminds/typeorm'
+
+await start({
+  type: 'postgres',
+  // ... other TypeORM options
+  sensitiveFields: ['password', 'secretKey', 'ssn'] // Overrides default blacklist
+})
+```
+
+Default sensitive fields are: `['password', 'mfaSecret', 'resetPasswordToken', 'confirmationToken']`.
 
 ### Use Case 1: Integrated with `@volcanicminds/backend`
 
@@ -115,25 +135,26 @@ Filters are applied by using `fieldName:operator=value`. If no operator is speci
 
 #### Operators Table
 
-| Operator     | Description                          | Example URL                                   | PostgreSQL | MongoDB |
-| :----------- | :----------------------------------- | :-------------------------------------------- | :--------: | :-----: |
-| `:eq`        | Equals                               | `...&status:eq=active`                        |     ✅     |   ✅    |
-| `:neq`       | Not equals                           | `...&status:neq=archived`                     |     ✅     |   ✅    |
-| `:gt`, `:ge` | Greater than / Greater than or equal | `...&visits:gt=100`                           |     ✅     |   ✅    |
-| `:lt`, `:le` | Less than / Less than or equal       | `...&price:lt=99.99`                          |     ✅     |   ✅    |
-| `:in`        | Included in an array (comma-sep.)    | `...&status:in=active,pending`                |     ✅     |   ✅    |
-| `:nin`       | Not included in an array             | `...&category:nin=old,obsolete`               |     ✅     |   ✅    |
-| `:overlap`   | Array overlap (has common elements)  | `...&companies:overlap=acme,globex`           |     ✅     |   ✅    |
-| `:between`   | Is between two values (colon-sep.)   | `...&createdAt:between=2024-01-01:2024-12-31` |     ✅     |   ✅    |
-| `:null`      | Is null                              | `...&deletedAt:null=true`                     |     ✅     |   ✅    |
-| `:notNull`   | Is not null                          | `...&updatedAt:notNull=true`                  |     ✅     |   ✅    |
-| `:contains`  | Contains (case-sensitive)            | `...&name:contains=Corp`                      |     ✅     |   ❌    |
-| `:containsi` | Contains (case-insensitive)          | `...&name:containsi=corp`                     |     ✅     |   ✅    |
-| `:starts`    | Starts with (case-sensitive)         | `...&code:starts=INV-`                        |     ✅     |   ❌    |
-| `:startsi`   | Starts with (case-insensitive)       | `...&code:startsi=inv-`                       |     ✅     |   ✅    |
-| `:ends`      | Ends with (case-sensitive)           | `...&file:ends=.pdf`                          |     ✅     |   ❌    |
-| `:endsi`     | Ends with (case-insensitive)         | `...&file:endsi=.pdf`                         |     ✅     |   ✅    |
-| `:eqi`       | Equals (case-insensitive)            | `...&country:eqi=it`                          |     ✅     |   ✅    |
+| Operator     | Description                                                               | Example URL                                   | PostgreSQL | MongoDB |
+| :----------- | :------------------------------------------------------------------------ | :-------------------------------------------- | :--------: | :-----: |
+| `:eq`        | Equals                                                                    | `...&status:eq=active`                        |     ✅     |   ✅    |
+| `:neq`       | Not equals                                                                | `...&status:neq=archived`                     |     ✅     |   ✅    |
+| `:gt`, `:ge` | Greater than / Greater than or equal                                      | `...&visits:gt=100`                           |     ✅     |   ✅    |
+| `:lt`, `:le` | Less than / Less than or equal                                            | `...&price:lt=99.99`                          |     ✅     |   ✅    |
+| `:in`        | Included in an array (comma-sep.)                                         | `...&status:in=active,pending`                |     ✅     |   ✅    |
+| `:nin`       | Not included in an array                                                  | `...&category:nin=old,obsolete`               |     ✅     |   ✅    |
+| `:overlap`   | Array overlap (has common elements)                                       | `...&companies:overlap=acme,globex`           |     ✅     |   ✅    |
+| `:between`   | Is between two values (colon-sep.)                                        | `...&createdAt:between=2024-01-01:2024-12-31` |     ✅     |   ✅    |
+| `:null`      | Is null                                                                   | `...&deletedAt:null=true`                     |     ✅     |   ✅    |
+| `:notNull`   | Is not null                                                               | `...&updatedAt:notNull=true`                  |     ✅     |   ✅    |
+| `:contains`  | Contains (case-sensitive)                                                 | `...&name:contains=Corp`                      |     ✅     |   ❌    |
+| `:containsi` | Contains (case-insensitive)                                               | `...&name:containsi=corp`                     |     ✅     |   ✅    |
+| `:starts`    | Starts with (case-sensitive)                                              | `...&code:starts=INV-`                        |     ✅     |   ❌    |
+| `:startsi`   | Starts with (case-insensitive)                                            | `...&code:startsi=inv-`                       |     ✅     |   ✅    |
+| `:ends`      | Ends with (case-sensitive)                                                | `...&file:ends=.pdf`                          |     ✅     |   ❌    |
+| `:endsi`     | Ends with (case-insensitive)                                              | `...&file:endsi=.pdf`                         |     ✅     |   ✅    |
+| `:eqi`       | Equals (case-insensitive)                                                 | `...&country:eqi=it`                          |     ✅     |   ✅    |
+| `:raw`       | Raw SQL ⚠️ **Dangerous** Raw SQL injection ⚠️ Requires env var to enable. | `...&age:raw=> 18`                            |     ✅     |   ✅    |
 
 #### Nested Relation Filters
 
@@ -166,6 +187,8 @@ This powerful syntax allows for the construction of virtually any query structur
 
 ## API Reference
 
+- **`start(options)`**: Initializes the database connection. `options` can now include `sensitiveFields` (array of strings) to customize blocked filter fields.
+- **`configureSensitiveFields(fields)`**: Helper to update sensitive fields at runtime.
 - **`executeFindQuery(repo, relations, data, extraWhere, extraOptions)`**: The main high-level function. Handles a full find-and-count query, processes all parameters, and returns records and pagination headers.
 - **`executeCountQuery(repo, data, extraWhere)`**: A utility to only count records based on filters.
 - **`applyQuery(data, extraWhere, repo)`**: The core translation function. Takes the raw query parameters and returns a TypeORM-compatible query object.
@@ -179,3 +202,7 @@ This powerful syntax allows for the construction of virtually any query structur
 ## License
 
 This project is licensed under the MIT License.
+
+```
+
+```

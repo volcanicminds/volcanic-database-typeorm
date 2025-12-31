@@ -18,7 +18,8 @@ import {
   executeFindQuery,
   executeFindView,
   useOrder,
-  useWhere
+  useWhere,
+  configureSensitiveFields
 } from './lib/query.js'
 import * as log from './lib/util/logger.js'
 import yn from './lib/util/yn.js'
@@ -40,6 +41,10 @@ async function start(options) {
 
   if (options == null || Object.keys(options).length == 0) {
     throw new Error('Volcanic Database: options not specified')
+  }
+
+  if (options.sensitiveFields) {
+    configureSensitiveFields(options.sensitiveFields)
   }
 
   const { LOG_DB_LEVEL = 'warn', LOG_COLORIZE = true, DB_SYNCHRONIZE_SCHEMA_AT_STARTUP = false } = process.env
@@ -70,9 +75,9 @@ async function start(options) {
   await ds.initialize()
 
   if (yn(DB_SYNCHRONIZE_SCHEMA_AT_STARTUP, false)) {
-    log.warn('Database schema synchronization started')
+    log.warn('Volcanic-TypeORM: Database schema synchronization started')
     await ds.synchronize()
-    log.warn('Database schema synchronization finished')
+    log.warn('Volcanic-TypeORM: Database schema synchronization finished')
   }
 
   // load uselful stuff
@@ -100,5 +105,6 @@ export {
   executeFindQuery,
   executeFindView,
   useOrder,
-  useWhere
+  useWhere,
+  configureSensitiveFields
 }

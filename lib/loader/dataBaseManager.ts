@@ -19,7 +19,7 @@ export async function retrieveBy(entityName, entityId) {
     return await global.entity[entityName].findOneById(entityId)
   } catch (error) {
     if (!(entityName in global.entity)) {
-      log.error(`${entityName} not found in global.entity`)
+      log.error(`Volcanic-TypeORM: ${entityName} not found in global.entity`)
     }
     throw error
   }
@@ -31,7 +31,7 @@ export async function addChange(entityName, entityId, status, userId, contents, 
     return global.entity[changeEntity].save(newChange)
   } catch (error) {
     if (!(changeEntity in global.entity)) {
-      log.error(`${changeEntity} not found in global.entity`)
+      log.error(`Volcanic-TypeORM: ${changeEntity} not found in global.entity`)
     }
     throw error
   }
