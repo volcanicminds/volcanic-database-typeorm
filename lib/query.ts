@@ -30,7 +30,7 @@ export const configureSensitiveFields = (fields: string[]) => {
 
 const evalOrder = (val: string = '') => (['desc', 'd', 'false', '1'].includes(val.toLowerCase()) ? 'desc' : 'asc')
 
-const escapeRegExp = (string) => {
+const escapeRegExp = (string: string) => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
