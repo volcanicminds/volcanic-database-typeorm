@@ -30,12 +30,13 @@ export const configureSensitiveFields = (fields: string[]) => {
 
 const evalOrder = (val: string = '') => (['desc', 'd', 'false', '1'].includes(val.toLowerCase()) ? 'desc' : 'asc')
 
-const escapeRegExp = (string: string) => {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+const escapeRegExp = (str: string) => {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-const hasProtoRisk = (str: string) =>
-  ['__proto__', 'constructor', 'prototype', 'toString', 'valueOf', 'toLocaleString'].includes(str)
+const isValidIdentifier = (str: string) => /^[a-zA-Z0-9_.]+$/.test(str)
+
+const hasProtoRisk = (str: string) => ['__proto__', 'constructor', 'prototype'].includes(str)
 
 export const useOrder = (order: string[] = []) => {
   const result = {}
@@ -44,6 +45,13 @@ export const useOrder = (order: string[] = []) => {
     .forEach((o: string) => {
       const parts = o.split(':')
       const fieldFullPath = parts[0].split('.')
+
+      // Controllo sicurezza identificatore
+      if (!isValidIdentifier(parts[0])) {
+        log.warn(`Volcanic-TypeORM: Invalid sort field skipped: ${parts[0]}`)
+        return
+      }
+
       const sortType = evalOrder(parts[1])
 
       let target = result
@@ -149,6 +157,12 @@ export const useWhere = (where: any, repo?: any) => {
     const m = key.match(new RegExp(`(${reservedWords})\\b`, 'ig'))
     const operator = m?.length ? m[0] : ':eq'
     const fullPath = key.replace(operator, '')
+
+    if (!isValidIdentifier(fullPath)) {
+      log.warn(`Volcanic-TypeORM: Invalid filter field skipped: ${fullPath}`)
+      continue
+    }
+
     const parts = fullPath.split('.')
 
     if (sensitiveFields.some((field) => fullPath.includes(field))) {
