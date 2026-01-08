@@ -234,7 +234,14 @@ export function applyQuery(data, extraWhere, repo) {
       if (isMongo(repo)) {
         query.where = { $and: [query.where, extraConditions] }
       } else {
-        query.where = { ...query.where, ...extraConditions }
+        if (Array.isArray(query.where)) {
+          query.where = query.where.map((condition) => ({
+            ...condition,
+            ...extraConditions
+          }))
+        } else {
+          query.where = { ...query.where, ...extraConditions }
+        }
       }
     } else {
       query.where = extraConditions
