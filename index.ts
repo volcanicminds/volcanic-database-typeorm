@@ -8,7 +8,9 @@ import * as loaderEntities from './lib/loader/entities.js'
 import * as userManager from './lib/loader/userManager.js'
 import * as tokenManager from './lib/loader/tokenManager.js'
 import * as dataBaseManager from './lib/loader/dataBaseManager.js'
+import { TenantManager } from './lib/loader/tenantManager.js'
 import { User } from './lib/entities/user.js'
+import { Tenant } from './lib/entities/tenant.js'
 import { Token } from './lib/entities/token.js'
 import { Change } from './lib/entities/change.js'
 import {
@@ -85,7 +87,22 @@ async function start(options) {
   Object.keys(repositories).map((r) => (repository[r] = ds.getRepository(repositories[r])))
   ;(global as any).connection = ds
   ;(global as any).entity = classes
-  ;(global as any).repository = repository
+  
+  // FAIL-FAST: Proxy to forbid access to global repositories
+  ;(global as any).repository = new Proxy(repository, {
+    get(target, prop) {
+      // Allow internal/debug access if needed (like console.log or inspection that checks keys)
+      if (prop === 'toJSON' || prop === 'toString' || prop === Symbol.toStringTag) return target[prop]
+      
+      // If the property exists in the repository map, BLOCK IT.
+      if (typeof prop === 'string' && prop in target) {
+        throw new Error(`[Volcanic Architecture 2.0] FATAL: Access to global.repository.${prop} is FORBIDDEN. Refactor usage to Context-Aware Service: service.use(req.db).`)
+      }
+      
+      return target[prop]
+    }
+  })
+
   return ds
 }
 
@@ -93,11 +110,13 @@ export { Database } from './types/global.js'
 export {
   start,
   User,
+  Tenant,
   Token,
   Change,
   userManager,
   tokenManager,
   dataBaseManager,
+  TenantManager,
   DataSource,
   applyQuery,
   executeCountQuery,
