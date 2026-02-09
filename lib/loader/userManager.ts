@@ -2,9 +2,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as bcrypt from 'bcrypt'
 import * as Crypto from 'crypto'
+import { QueryRunner } from 'typeorm'
 import { ServiceError } from '../util/error.js'
 import { executeCountQuery, executeFindQuery } from '../query.js'
 import { encrypt, decrypt } from '../util/crypto.js'
+
+/**
+ * Returns the appropriate user repository.
+ * If a runner is provided (multi-tenant context), uses the runner's manager.
+ * Otherwise falls back to the global repository (single-tenant/default).
+ */
+function getUserRepo(runner?: QueryRunner) {
+  return runner ? runner.manager.getRepository(global.entity.User) : global.repository.users
+}
 
 export function isImplemented() {
   return true
@@ -14,7 +24,7 @@ export async function isValidUser(data: typeof global.entity.User) {
   return !!data && (!!data._id || !!data.id) && !!data.externalId && !!data.email && !!data.password
 }
 
-export async function createUser(data: typeof global.entity.User) {
+export async function createUser(data: typeof global.entity.User, runner?: QueryRunner) {
   const { username, email, password } = data
 
   if (!email || !password) {
@@ -25,14 +35,15 @@ export async function createUser(data: typeof global.entity.User) {
   const hashedPassword = await bcrypt.hash(password, salt)
 
   try {
+    const repo = getUserRepo(runner)
     let externalId, user
     do {
       externalId = Crypto.randomUUID({ disableEntropyCache: true })
 
-      user = await global.repository.users.findOneBy({ externalId: externalId })
+      user = await repo.findOneBy({ externalId: externalId })
     } while (user != null)
 
-    user = await global.entity.User.create({
+    const newUser = repo.create({
       ...data,
       passwordChangedAt: new Date(),
       confirmed: false,
@@ -49,7 +60,7 @@ export async function createUser(data: typeof global.entity.User) {
       mfaRecoveryCodes: []
     } as typeof global.entity.User)
 
-    return await global.entity.User.save(user)
+    return getUserRepo(runner).save(newUser)
   } catch (error) {
     if (error?.code == 23505) {
       throw new ServiceError('Email or username already registered', 409)
@@ -58,24 +69,24 @@ export async function createUser(data: typeof global.entity.User) {
   }
 }
 
-export async function deleteUser(id: string) {
+export async function deleteUser(id: string, runner?: QueryRunner) {
   if (!id) {
     throw new ServiceError('Invalid parameters', 400)
   }
 
   try {
-    const userEx = await retrieveUserById(id)
+    const userEx = await retrieveUserById(id, runner)
     if (!userEx) {
       throw new ServiceError('User not found', 404)
     }
 
-    return global.entity.User.delete(id)
+    return getUserRepo(runner).delete(id)
   } catch (error) {
     throw error
   }
 }
 
-export async function resetExternalId(id: string) {
+export async function resetExternalId(id: string, runner?: QueryRunner) {
   if (!id) {
     throw new ServiceError('Invalid parameters', 400)
   }
@@ -84,10 +95,10 @@ export async function resetExternalId(id: string) {
     let externalId, user
     do {
       externalId = Crypto.randomUUID({ disableEntropyCache: true })
-      user = await global.repository.users.findOneBy({ externalId: externalId })
+      user = await getUserRepo(runner).findOneBy({ externalId: externalId })
     } while (user != null)
 
-    return await updateUserById(id, { externalId: externalId })
+    return await updateUserById(id, { externalId: externalId }, runner)
   } catch (error) {
     if (error?.code == 23505) {
       throw new ServiceError('External ID not changed', 409)
@@ -96,83 +107,84 @@ export async function resetExternalId(id: string) {
   }
 }
 
-export async function updateUserById(id: string, user: typeof global.entity.User) {
+export async function updateUserById(id: string, user: typeof global.entity.User, runner?: QueryRunner) {
   if (!id || !user) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    const userEx = await retrieveUserById(id)
+    const repo = getUserRepo(runner)
+    const userEx = await retrieveUserById(id, runner)
     if (!userEx) {
       throw new ServiceError('User not found', 404)
     }
-    const merged = global.repository.users.merge(userEx, user)
-    return await global.entity.User.save(merged)
+    const merged = repo.merge(userEx, user)
+    return repo.save(merged)
   } catch (error) {
     throw error
   }
 }
 
-export async function retrieveUserById(id: string) {
+export async function retrieveUserById(id: string, runner?: QueryRunner) {
   if (!id) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    return await global.repository.users.findOneById(id)
+    return await getUserRepo(runner).findOneBy({ id: id })
   } catch (error) {
     throw error
   }
 }
 
-export async function retrieveUserByEmail(email: string) {
+export async function retrieveUserByEmail(email: string, runner?: QueryRunner) {
   if (!email) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    return await global.repository.users.findOneBy({ email: email })
+    return await getUserRepo(runner).findOneBy({ email: email })
   } catch (error) {
     throw error
   }
 }
 
-export async function retrieveUserByUsername(username: string) {
+export async function retrieveUserByUsername(username: string, runner?: QueryRunner) {
   if (!username) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    return await global.repository.users.findOneBy({ username })
+    return await getUserRepo(runner).findOneBy({ username })
   } catch (error) {
     throw error
   }
 }
 
-export async function retrieveUserByConfirmationToken(code: string) {
+export async function retrieveUserByConfirmationToken(code: string, runner?: QueryRunner) {
   if (!code) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    return await global.repository.users.findOneBy({ confirmationToken: code })
+    return await getUserRepo(runner).findOneBy({ confirmationToken: code })
   } catch (error) {
     throw error
   }
 }
 
-export async function retrieveUserByResetPasswordToken(code: string) {
+export async function retrieveUserByResetPasswordToken(code: string, runner?: QueryRunner) {
   if (!code) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    return await global.repository.users.findOneBy({ resetPasswordToken: code })
+    return await getUserRepo(runner).findOneBy({ resetPasswordToken: code })
   } catch (error) {
     throw error
   }
 }
 
-export async function retrieveUserByExternalId(externalId: string) {
+export async function retrieveUserByExternalId(externalId: string, runner?: QueryRunner) {
   if (!externalId) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    return await global.repository.users.findOne({
+    return await getUserRepo(runner).findOne({
       where: { externalId: externalId },
       cache: global.cacheTimeout
     })
@@ -181,12 +193,12 @@ export async function retrieveUserByExternalId(externalId: string) {
   }
 }
 
-export async function retrieveUserByPassword(email: string, password: string) {
+export async function retrieveUserByPassword(email: string, password: string, runner?: QueryRunner) {
   if (!email || !password) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    const user = await global.repository.users.findOneBy({ email: email })
+    const user = await getUserRepo(runner).findOneBy({ email: email })
     if (!user) {
       throw new Error('Wrong credentials')
     }
@@ -197,17 +209,18 @@ export async function retrieveUserByPassword(email: string, password: string) {
   }
 }
 
-export async function changePassword(email: string, password: string, oldPassword: string) {
+export async function changePassword(email: string, password: string, oldPassword: string, runner?: QueryRunner) {
   if (!email || !password || !oldPassword) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    const user = await global.repository.users.findOneBy({ email: email })
+    const repo = getUserRepo(runner)
+    const user = await repo.findOneBy({ email: email })
     const match = await bcrypt.compare(oldPassword, user.password)
     if (match) {
       const salt = await bcrypt.genSalt(12)
       const hashedPassword = await bcrypt.hash(password, salt)
-      return await global.entity.User.save({ ...user, passwordChangedAt: new Date(), password: hashedPassword })
+      return repo.save({ ...user, passwordChangedAt: new Date(), password: hashedPassword })
     }
     throw new ServiceError('Password not changed', 400)
   } catch (error) {
@@ -215,15 +228,16 @@ export async function changePassword(email: string, password: string, oldPasswor
   }
 }
 
-export async function forgotPassword(email: string) {
+export async function forgotPassword(email: string, runner?: QueryRunner) {
   if (!email) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    const user = await global.repository.users.findOneBy({ email: email })
+    const repo = getUserRepo(runner)
+    const user = await repo.findOneBy({ email: email })
 
     if (user) {
-      return await global.entity.User.save({
+      return repo.save({
         ...user,
         resetPasswordTokenAt: new Date(),
         resetPasswordToken: Crypto.randomBytes(64).toString('hex')
@@ -235,19 +249,20 @@ export async function forgotPassword(email: string) {
   }
 }
 
-export async function resetPassword(user: typeof global.entity.User, password: string) {
+export async function resetPassword(user: typeof global.entity.User, password: string, runner?: QueryRunner) {
   if (!user || !password || !user?.email) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    const userEx = await global.repository.users.findOneBy({ email: user.email })
+    const repo = getUserRepo(runner)
+    const userEx = await repo.findOneBy({ email: user.email })
     if (!userEx) {
       throw new Error('Wrong credentials')
     }
 
     const salt = await bcrypt.genSalt(12)
     const hashedPassword = await bcrypt.hash(password, salt)
-    return await global.entity.User.save({
+    return repo.save({
       ...userEx,
       passwordChangedAt: new Date(),
       confirmed: true,
@@ -260,23 +275,23 @@ export async function resetPassword(user: typeof global.entity.User, password: s
   }
 }
 
-export async function userConfirmation(user: typeof global.entity.User) {
+export async function userConfirmation(user: typeof global.entity.User, runner?: QueryRunner) {
   if (!user) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    return await global.entity.User.save({ ...user, confirmed: true, confirmedAt: new Date(), confirmationToken: null })
+    return getUserRepo(runner).save({ ...user, confirmed: true, confirmedAt: new Date(), confirmationToken: null })
   } catch (error) {
     throw error
   }
 }
 
-export async function blockUserById(id: string, reason: string) {
-  return updateUserById(id, { blocked: true, blockedAt: new Date(), blockedReason: reason })
+export async function blockUserById(id: string, reason: string, runner?: QueryRunner) {
+  return updateUserById(id, { blocked: true, blockedAt: new Date(), blockedReason: reason }, runner)
 }
 
-export async function unblockUserById(id: string) {
-  return updateUserById(id, { blocked: false, blockedAt: new Date(), blockedReason: null })
+export async function unblockUserById(id: string, runner?: QueryRunner) {
+  return updateUserById(id, { blocked: false, blockedAt: new Date(), blockedReason: null }, runner)
 }
 
 export function isPasswordToBeChanged(user: typeof global.entity.User) {
@@ -302,38 +317,46 @@ export function isPasswordToBeChanged(user: typeof global.entity.User) {
   return false
 }
 
-export async function countQuery(data: any) {
-  return await executeCountQuery(global.repository.users, data)
+export async function countQuery(data: any, runner?: QueryRunner) {
+  return await executeCountQuery(getUserRepo(runner), data)
 }
 
-export async function findQuery(data: any) {
-  return await executeFindQuery(global.repository.users, {}, data)
+export async function findQuery(data: any, runner?: QueryRunner) {
+  return await executeFindQuery(getUserRepo(runner), {}, data)
 }
 
-export async function disableUserById(id: string) {
-  await updateUserById(id, { blocked: true, blockedAt: new Date(), blockedReason: 'User disabled to unregister' })
-  return resetExternalId(id)
+export async function disableUserById(id: string, runner?: QueryRunner) {
+  await updateUserById(
+    id,
+    { blocked: true, blockedAt: new Date(), blockedReason: 'User disabled to unregister' },
+    runner
+  )
+  return resetExternalId(id, runner)
 }
 
 // MFA Persistence Methods
 
-export async function saveMfaSecret(userId: string, secret: string) {
+export async function saveMfaSecret(userId: string, secret: string, runner?: QueryRunner) {
   if (!userId || !secret) {
     throw new ServiceError('Invalid parameters', 400)
   }
   const encryptedSecret = encrypt(secret)
 
-  await updateUserById(userId, {
-    mfaSecret: encryptedSecret,
-    mfaType: 'TOTP'
-  })
+  await updateUserById(
+    userId,
+    {
+      mfaSecret: encryptedSecret,
+      mfaType: 'TOTP'
+    },
+    runner
+  )
   return true
 }
 
-export async function retrieveMfaSecret(userId: string) {
+export async function retrieveMfaSecret(userId: string, runner?: QueryRunner) {
   if (!userId) throw new ServiceError('Invalid parameters', 400)
 
-  const user = await global.repository.users
+  const user = await getUserRepo(runner)
     .createQueryBuilder('user')
     .addSelect('user.mfaSecret')
     .where('user.id = :id', { id: userId })
@@ -344,22 +367,20 @@ export async function retrieveMfaSecret(userId: string) {
   return decrypt(user.mfaSecret)
 }
 
-export async function enableMfa(userId: string) {
+export async function enableMfa(userId: string, runner?: QueryRunner) {
   if (!userId) throw new ServiceError('Invalid parameters', 400)
-  return await updateUserById(userId, { mfaEnabled: true })
+  return await updateUserById(userId, { mfaEnabled: true }, runner)
 }
 
-export async function disableMfa(userId: string) {
+export async function disableMfa(userId: string, runner?: QueryRunner) {
   if (!userId) throw new ServiceError('Invalid parameters', 400)
-  return await updateUserById(userId, { mfaEnabled: false, mfaSecret: null, mfaRecoveryCodes: [] })
+  return await updateUserById(userId, { mfaEnabled: false, mfaSecret: null, mfaRecoveryCodes: [] }, runner)
 }
 
-export async function forceDisableMfaForAdmin(email: string) {
+export async function forceDisableMfaForAdmin(email: string, runner?: QueryRunner) {
   if (!email) return false
 
-  const userRepo = global.repository.users
-
-  const user = await userRepo.findOneBy({ email: email })
+  const user = await getUserRepo(runner).findOneBy({ email: email })
   if (!user) {
     return false
   }
@@ -372,11 +393,15 @@ export async function forceDisableMfaForAdmin(email: string) {
     return false
   }
 
-  await updateUserById(user.id, {
-    mfaEnabled: false,
-    mfaSecret: null,
-    mfaRecoveryCodes: []
-  })
+  await updateUserById(
+    user.id,
+    {
+      mfaEnabled: false,
+      mfaSecret: null,
+      mfaRecoveryCodes: []
+    },
+    runner
+  )
 
   return true
 }

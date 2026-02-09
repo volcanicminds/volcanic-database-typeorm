@@ -9,6 +9,7 @@
 
 ## ⚠️ Breaking Changes in v2.x
 
+- Added support for multi-tenancy.
 - Change package manager from yarn to npm.
 - Updated all dependencies to their latest versions.
 - Increase minimum Node.js version to 24.x.
@@ -202,7 +203,3 @@ This powerful syntax allows for the construction of virtually any query structur
 ## License
 
 This project is licensed under the MIT License.
-
-```
-
-```

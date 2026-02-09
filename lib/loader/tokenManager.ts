@@ -1,8 +1,18 @@
 /* eslint-disable no-useless-catch */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as Crypto from 'crypto'
+import { QueryRunner } from 'typeorm'
 import { ServiceError } from '../util/error.js'
 import { executeCountQuery, executeFindQuery } from '../query.js'
+
+/**
+ * Returns the appropriate token repository.
+ * If a runner is provided (multi-tenant context), uses the runner's manager.
+ * Otherwise falls back to the global repository (single-tenant/default).
+ */
+function getTokenRepo(runner?: QueryRunner) {
+  return runner ? runner.manager.getRepository(global.entity.Token) : global.repository.tokens
+}
 
 export function isImplemented() {
   return true
@@ -12,7 +22,7 @@ export async function isValidToken(data: typeof global.entity.Token) {
   return !!data && (!!data._id || !!data.id) && !!data.externalId && !!data.name
 }
 
-export async function createToken(data: typeof global.entity.Token) {
+export async function createToken(data: typeof global.entity.Token, runner?: QueryRunner) {
   const { name, description } = data
 
   if (!name) {
@@ -20,14 +30,14 @@ export async function createToken(data: typeof global.entity.Token) {
   }
 
   try {
+    const repo = getTokenRepo(runner)
     let externalId, token
     do {
       externalId = Crypto.randomUUID({ disableEntropyCache: true })
-
-      token = await global.repository.tokens.findOneBy({ externalId: externalId })
+      token = await repo.findOneBy({ externalId: externalId })
     } while (token != null)
 
-    token = await global.entity.Token.create({
+    const newToken = repo.create({
       ...data,
       name: name,
       description: description,
@@ -36,94 +46,95 @@ export async function createToken(data: typeof global.entity.Token) {
       externalId: externalId
     } as typeof global.entity.Token)
 
-    return await global.entity.Token.save(token)
+    return repo.save(newToken)
   } catch (error) {
     throw error
   }
 }
 
-export async function resetExternalId(id: string) {
+export async function resetExternalId(id: string, runner?: QueryRunner) {
   if (!id) {
     throw new ServiceError('Invalid parameters', 400)
   }
 
   try {
+    const repo = getTokenRepo(runner)
     let externalId, token
     do {
       externalId = Crypto.randomUUID({ disableEntropyCache: true })
-      token = await global.repository.tokens.findOneBy({ externalId: externalId })
+      token = await repo.findOneBy({ externalId: externalId })
     } while (token != null)
 
-    // TODO: use externalId instead id
-    return await updateTokenById(id, { externalId: externalId })
+    return await updateTokenById(id, { externalId: externalId }, runner)
   } catch (error) {
     if (error?.code == 23505) {
-      throw new Error('External ID not changed')
+      throw new ServiceError('External ID not changed', 409)
     }
     throw error
   }
 }
 
-export async function updateTokenById(id: string, token: typeof global.entity.Token) {
+export async function updateTokenById(id: string, token: typeof global.entity.Token, runner?: QueryRunner) {
   if (!id || !token) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    const tokenEx = await global.repository.tokens.findOneById(id)
+    const repo = getTokenRepo(runner)
+    const tokenEx = await repo.findOneBy({ id: id })
     if (!tokenEx) {
       throw new ServiceError('Token not found', 404)
     }
-    const merged = global.repository.tokens.merge(tokenEx, token)
-    return await global.entity.Token.save(merged)
+    const merged = repo.merge(tokenEx, token)
+    return repo.save(merged)
   } catch (error) {
     throw error
   }
 }
 
-export async function retrieveTokenById(id: string) {
+export async function retrieveTokenById(id: string, runner?: QueryRunner) {
   if (!id) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    return await global.repository.tokens.findOneById(id)
+    return await getTokenRepo(runner).findOneBy({ id: id })
   } catch (error) {
     throw error
   }
 }
 
-export async function retrieveTokenByExternalId(externalId: string) {
+export async function retrieveTokenByExternalId(externalId: string, runner?: QueryRunner) {
   if (!externalId) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    return await global.repository.tokens.findOneBy({ externalId: externalId })
+    return await getTokenRepo(runner).findOneBy({ externalId: externalId })
   } catch (error) {
     throw error
   }
 }
 
-export async function blockTokenById(id: string, reason: string) {
-  return updateTokenById(id, { blocked: true, blockedAt: new Date(), blockedReason: reason })
+export async function blockTokenById(id: string, reason: string, runner?: QueryRunner) {
+  return updateTokenById(id, { blocked: true, blockedAt: new Date(), blockedReason: reason }, runner)
 }
 
-export async function unblockTokenById(id: string) {
-  return updateTokenById(id, { blocked: false, blockedAt: new Date(), blockedReason: null })
+export async function unblockTokenById(id: string, runner?: QueryRunner) {
+  return updateTokenById(id, { blocked: false, blockedAt: new Date(), blockedReason: null }, runner)
 }
 
-export async function countQuery(data: any) {
-  return await executeCountQuery(global.repository.tokens, data, {})
+export async function countQuery(data: any, runner?: QueryRunner) {
+  return await executeCountQuery(getTokenRepo(runner), data, {})
 }
 
-export async function findQuery(data: any) {
-  return await executeFindQuery(global.repository.tokens, {}, data)
+export async function findQuery(data: any, runner?: QueryRunner) {
+  return await executeFindQuery(getTokenRepo(runner), {}, data)
 }
 
-export async function removeTokenById(id: string) {
+export async function removeTokenById(id: string, runner?: QueryRunner) {
   if (!id) {
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
-    return await global.repository.tokens.delete(id)
+    return await getTokenRepo(runner).delete(id)
   } catch (error) {
     throw error
   }

@@ -12,7 +12,8 @@ import {
   MoreThan,
   MoreThanOrEqual,
   LessThan,
-  LessThanOrEqual
+  LessThanOrEqual,
+  QueryRunner
 } from 'typeorm'
 import yn from './util/yn.js'
 import * as log from './util/logger.js'
@@ -278,10 +279,17 @@ export async function executeFindQuery(
   }
 }
 
-export async function executeFindView(viewEntity: any, data: any = {}, extraWhere: any = {}, extraOptions: any = {}) {
+export async function executeFindView(
+  viewEntity: any,
+  data: any = {},
+  extraWhere: any = {},
+  extraOptions: any = {},
+  runner?: QueryRunner
+) {
   const extra = applyQuery(data, extraWhere, null)
+  const manager = runner ? runner.manager : global.connection.manager
 
-  const [records = [], totalCount] = await global.connection.manager.findAndCount(viewEntity, {
+  const [records = [], totalCount] = await manager.findAndCount(viewEntity, {
     ...extra,
     ...extraOptions
   })
@@ -303,9 +311,10 @@ export async function executeCountQuery(repo: any, data = {}, extraWhere: any = 
   return await repo.count(isMongo(repo) ? where : { where: where })
 }
 
-export async function executeCountView(viewEntity: any, data = {}, extraWhere: any = {}) {
+export async function executeCountView(viewEntity: any, data = {}, extraWhere: any = {}, runner?: QueryRunner) {
   const { where = {} } = applyQuery(data, extraWhere, null)
-  return await global.connection.manager.count(viewEntity, { where: where })
+  const manager = runner ? runner.manager : global.connection.manager
+  return await manager.count(viewEntity, { where: where })
 }
 
 function getType(repo) {
