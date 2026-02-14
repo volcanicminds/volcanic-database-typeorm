@@ -77,11 +77,15 @@ This is the most straightforward way to use the library. The `executeFindQuery` 
 // src/api/users/controller/user.ts
 import { FastifyReply, FastifyRequest } from '@volcanicminds/backend'
 import { executeFindQuery } from '@volcanicminds/typeorm'
+import { User } from '../../../entities/user.e.js' // Your Entity
 
 export async function find(req: FastifyRequest, reply: FastifyReply) {
-  // req.data() automatically extracts query parameters
+  // 1. Get the repository from the request context (Multi-Tenant safe)
+  const userRepo = req.db.getRepository(User)
+
+  // 2. executeFindQuery handles the rest
   const { headers, records } = await executeFindQuery(
-    repository.users, // Your TypeORM repository
+    userRepo,
     { company: true }, // Optional relations to include
     req.data()
   )
