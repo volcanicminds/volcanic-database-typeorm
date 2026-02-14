@@ -11,7 +11,7 @@ import { executeCountQuery, executeFindQuery } from '../query.js'
  * Otherwise falls back to the global repository (single-tenant/default).
  */
 function getTokenRepo(runner?: QueryRunner) {
-  return runner ? runner.manager.getRepository(global.entity.Token) : global.repository.tokens
+  return runner ? runner.manager.getRepository(global.entity.Token) : global.connection.getRepository(global.entity.Token)
 }
 
 export function isImplemented() {

@@ -13,7 +13,7 @@ import { encrypt, decrypt } from '../util/crypto.js'
  * Otherwise falls back to the global repository (single-tenant/default).
  */
 function getUserRepo(runner?: QueryRunner) {
-  return runner ? runner.manager.getRepository(global.entity.User) : global.repository.users
+  return runner ? runner.manager.getRepository(global.entity.User) : global.connection.getRepository(global.entity.User)
 }
 
 export function isImplemented() {

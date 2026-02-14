@@ -24,7 +24,7 @@ export async function retrieveBy(entityName: string, entityId: string, runner?: 
     if (runner) {
       return await runner.manager.findOneBy(entityName, { id: entityId })
     }
-    return await global.entity[entityName].findOneBy({ id: entityId })
+    return await global.connection.getRepository(global.entity[entityName]).findOneBy({ id: entityId })
   } catch (error) {
     if (!(entityName in global.entity)) {
       log.error(`Volcanic-TypeORM: ${entityName} not found in global.entity`)
@@ -48,8 +48,9 @@ export async function addChange(
       const newChange = repo.create({ entityName, entityId, status, userId, contents })
       return repo.save(newChange)
     }
-    const newChange = await global.entity[changeEntity].create({ entityName, entityId, status, userId, contents })
-    return global.entity[changeEntity].save(newChange)
+    const repo = global.connection.getRepository(global.entity[changeEntity])
+    const newChange = repo.create({ entityName, entityId, status, userId, contents })
+    return repo.save(newChange)
   } catch (error) {
     if (!(changeEntity in global.entity)) {
       log.error(`Volcanic-TypeORM: ${changeEntity} not found in global.entity`)
