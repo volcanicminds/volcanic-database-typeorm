@@ -55,14 +55,14 @@ async function start(options) {
     LOG_DB_LEVEL === 'trace'
       ? 'all'
       : LOG_DB_LEVEL === 'debug'
-      ? 'query'
-      : LOG_DB_LEVEL === 'info'
-      ? 'info'
-      : LOG_DB_LEVEL === 'warn'
-      ? 'warn'
-      : LOG_DB_LEVEL === 'error'
-      ? 'error'
-      : LOG_DB_LEVEL
+        ? 'query'
+        : LOG_DB_LEVEL === 'info'
+          ? 'info'
+          : LOG_DB_LEVEL === 'warn'
+            ? 'warn'
+            : LOG_DB_LEVEL === 'error'
+              ? 'error'
+              : LOG_DB_LEVEL
 
   ;(global as any).cacheTimeout = options?.cacheTimeout || 30000 // milliseconds
   ;(global as any).isLoggingEnabled = options?.logging || true
@@ -77,9 +77,14 @@ async function start(options) {
   await ds.initialize()
 
   if (yn(DB_SYNCHRONIZE_SCHEMA_AT_STARTUP, false)) {
-    log.warn('Volcanic-TypeORM: Database schema synchronization started')
-    await ds.synchronize()
-    log.warn('Volcanic-TypeORM: Database schema synchronization finished')
+    const { multi_tenant } = (global as any).config?.options || {}
+    if (multi_tenant?.enabled) {
+      log.warn('Volcanic-TypeORM: Multi-Tenant enabled, skipping schema synchronization')
+    } else {
+      log.warn('Volcanic-TypeORM: Database schema synchronization started')
+      await ds.synchronize()
+      log.warn('Volcanic-TypeORM: Database schema synchronization finished')
+    }
   }
 
   // load uselful stuff
@@ -87,18 +92,20 @@ async function start(options) {
   Object.keys(repositories).map((r) => (repository[r] = ds.getRepository(repositories[r])))
   ;(global as any).connection = ds
   ;(global as any).entity = classes
-  
+
   // FAIL-FAST: Proxy to forbid access to global repositories
   ;(global as any).repository = new Proxy(repository, {
     get(target, prop) {
       // Allow internal/debug access if needed (like console.log or inspection that checks keys)
       if (prop === 'toJSON' || prop === 'toString' || prop === Symbol.toStringTag) return target[prop]
-      
+
       // If the property exists in the repository map, BLOCK IT.
       if (typeof prop === 'string' && prop in target) {
-        throw new Error(`[Volcanic Architecture 2.0] FATAL: Access to global.repository.${prop} is FORBIDDEN. Refactor usage to Context-Aware Service: service.use(req.db).`)
+        throw new Error(
+          `[Volcanic-TypeORM] FATAL: Access to global.repository.${prop} is FORBIDDEN. Refactor usage to Context-Aware Service: service.use(req.db).`
+        )
       }
-      
+
       return target[prop]
     }
   })
