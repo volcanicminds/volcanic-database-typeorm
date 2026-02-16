@@ -174,7 +174,6 @@ export class TenantManager {
     // Exclude dbSchema from updates as it requires migration of tables
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { dbSchema: _ignore, ...updateData } = data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await repo.update(id, updateData as any)
     return repo.findOneBy({ id })
   }
