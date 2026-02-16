@@ -138,13 +138,38 @@ export class TenantManager {
       try {
         await qr.startTransaction()
         await qr.query(`CREATE SCHEMA IF NOT EXISTS "${safeSchema}"`)
+
+        // Context Switch within the same transaction to seed the user
+        await qr.query(`SET search_path TO "${safeSchema}", public`)
+
+        if (data.adminEmail && data.adminPassword) {
+          if ((global as any).log?.i) (global as any).log.info(`[TenantManager] Seeding Admin User: ${data.adminEmail}`)
+          const { createUser } = await import('./userManager.js')
+
+          await createUser(
+            {
+              email: data.adminEmail,
+              password: data.adminPassword,
+              roles: ['admin'],
+              firstName: data.adminFirstName || 'Tenant',
+              lastName: data.adminLastName || 'Admin'
+            } as any,
+            qr
+          )
+        }
+
         await qr.commitTransaction()
-        if ((global as any).log?.i) (global as any).log.info(`[TenantManager] Created Schema: ${safeSchema}`)
+        if ((global as any).log?.i) (global as any).log.info(`[TenantManager] Created Schema & Admin: ${safeSchema}`)
       } catch (err) {
         await qr.rollbackTransaction()
         // Optional: delete tenant record if schema creation fails
         throw err
       } finally {
+        try {
+          await qr.query(`SET search_path TO public`)
+        } catch (e) {
+          // ignore
+        }
         await qr.release()
       }
     } else {
