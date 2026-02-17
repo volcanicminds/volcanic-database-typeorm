@@ -1,17 +1,33 @@
 /* eslint-disable no-useless-catch */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as Crypto from 'crypto'
-import { QueryRunner } from 'typeorm'
+import { QueryRunner, EntityManager } from 'typeorm'
 import { ServiceError } from '../util/error.js'
 import { executeCountQuery, executeFindQuery } from '../query.js'
 
 /**
  * Returns the appropriate token repository.
- * If a runner is provided (multi-tenant context), uses the runner's manager.
- * Otherwise falls back to the global repository (single-tenant/default).
+ * Use this to support both explicit EntityManager (req.db) and QueryRunner.
  */
-function getTokenRepo(runner?: QueryRunner) {
-  return runner ? runner.manager.getRepository(global.entity.Token) : global.connection.getRepository(global.entity.Token)
+function getTokenRepo(context?: QueryRunner | EntityManager) {
+  const { multi_tenant } = (global as any).config?.options || {}
+
+  if (multi_tenant?.enabled && !context) {
+    throw new Error('[TokenManager] ⛔️ CRITICAL: Missing DB Context (Runner/Manager) in Multi-Tenant Environment!')
+  }
+
+  // If no context provided (and not multi-tenant), fallback to global
+  if (!context) {
+    return global.connection.getRepository(global.entity.Token)
+  }
+
+  // Check if it's a QueryRunner (has .manager property)
+  if ((context as QueryRunner).manager) {
+    return (context as QueryRunner).manager.getRepository(global.entity.Token)
+  }
+
+  // Otherwise treat as EntityManager
+  return (context as EntityManager).getRepository(global.entity.Token)
 }
 
 export function isImplemented() {

@@ -1,4 +1,4 @@
-import { QueryRunner } from 'typeorm'
+import { QueryRunner, EntityManager } from 'typeorm'
 import * as log from '../util/logger.js'
 
 export function isImplemented() {
@@ -19,10 +19,24 @@ export async function synchronizeSchemas(runner?: QueryRunner) {
   }
 }
 
-export async function retrieveBy(entityName: string, entityId: string, runner?: QueryRunner) {
+export async function retrieveBy(entityName: string, entityId: string, context?: QueryRunner | EntityManager) {
   try {
-    if (runner) {
-      return await runner.manager.findOneBy(entityName, { id: entityId })
+    const { multi_tenant } = (global as any).config?.options || {}
+
+    if (multi_tenant?.enabled && !context) {
+      const errorMsg =
+        '[DataBaseManager] ⛔️ CRITICAL: Missing DB Context (Runner/Manager) in Multi-Tenant Environment! Implicit fallback to public schema forbidden.'
+      log.error(errorMsg)
+      throw new Error(errorMsg)
+    }
+
+    if (context) {
+      // Handle QueryRunner logic
+      if ((context as QueryRunner).manager) {
+        return await (context as QueryRunner).manager.findOneBy(entityName, { id: entityId })
+      }
+      // Handle EntityManager logic
+      return await (context as EntityManager).findOneBy(entityName, { id: entityId })
     }
     return await global.connection.getRepository(global.entity[entityName]).findOneBy({ id: entityId })
   } catch (error) {
@@ -40,11 +54,26 @@ export async function addChange(
   userId: string,
   contents: unknown,
   changeEntity = 'Change',
-  runner?: QueryRunner
+  context?: QueryRunner | EntityManager
 ) {
   try {
-    if (runner) {
-      const repo = runner.manager.getRepository(changeEntity)
+    const { multi_tenant } = (global as any).config?.options || {}
+
+    if (multi_tenant?.enabled && !context) {
+      const errorMsg =
+        '[DataBaseManager] ⛔️ CRITICAL: Missing DB Context (Runner/Manager) in Multi-Tenant Environment! Implicit fallback to public schema forbidden.'
+      log.error(errorMsg)
+      throw new Error(errorMsg)
+    }
+
+    if (context) {
+      let repo
+      if ((context as QueryRunner).manager) {
+        repo = (context as QueryRunner).manager.getRepository(changeEntity)
+      } else {
+        repo = (context as EntityManager).getRepository(changeEntity)
+      }
+
       const newChange = repo.create({ entityName, entityId, status, userId, contents })
       return repo.save(newChange)
     }

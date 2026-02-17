@@ -2,18 +2,39 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as bcrypt from 'bcrypt'
 import * as Crypto from 'crypto'
-import { QueryRunner } from 'typeorm'
+import { QueryRunner, EntityManager } from 'typeorm'
 import { ServiceError } from '../util/error.js'
 import { executeCountQuery, executeFindQuery } from '../query.js'
 import { encrypt, decrypt } from '../util/crypto.js'
 
 /**
  * Returns the appropriate user repository.
- * If a runner is provided (multi-tenant context), uses the runner's manager.
- * Otherwise falls back to the global repository (single-tenant/default).
+ * Use this to support both explicit EntityManager (req.db) and QueryRunner.
  */
-function getUserRepo(runner?: QueryRunner) {
-  return runner ? runner.manager.getRepository(global.entity.User) : global.connection.getRepository(global.entity.User)
+function getUserRepo(context?: QueryRunner | EntityManager) {
+  const { multi_tenant } = (global as any).config?.options || {}
+
+  // Hardening: In Multi-Tenant, we MUST have a context (Runner or Manager).
+  // Implicit fallback to global.connection is dangerous.
+  if (multi_tenant?.enabled && !context) {
+    const errorMsg =
+      '[UserManager] ⛔️ CRITICAL: Missing DB Context (Runner/Manager) in Multi-Tenant Environment! Implicit fallback to public schema forbidden.'
+    console.error(errorMsg)
+    throw new Error(errorMsg)
+  }
+
+  // If no context provided (and not multi-tenant), fallback to global
+  if (!context) {
+    return global.connection.getRepository(global.entity.User)
+  }
+
+  // Check if it's a QueryRunner (has .manager property)
+  if ((context as QueryRunner).manager) {
+    return (context as QueryRunner).manager.getRepository(global.entity.User)
+  }
+
+  // Otherwise treat as EntityManager
+  return (context as EntityManager).getRepository(global.entity.User)
 }
 
 export function isImplemented() {
