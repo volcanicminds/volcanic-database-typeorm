@@ -3,6 +3,36 @@
 [![volcanic-typeorm](https://img.shields.io/badge/volcanic-minds-orange)](https://github.com/volcanicminds/volcanic-typeorm)
 [![npm](https://img.shields.io/badge/package-npm-white)](https://www.npmjs.com/package/@volcanicminds/typeorm)
 
+# Volcanic Database TypeORM
+
+## Multi-Tenancy (Unified Context Pattern)
+
+This package enforces a strict isolation pattern for Postgres Multi-Tenancy using `search_path`.
+
+### Critical Security Rule
+
+**Global context switching is forbidden.**
+You must always provide an `EntityManager` (from a QueryRunner) when switching context.
+
+```typescript
+// ❌ WRONG (Will Throw Error)
+await tenantManager.switchContext(tenant)
+
+// ✅ CORRECT (Middleware / Manual)
+const qr = dataSource.createQueryRunner()
+await tenantManager.switchContext(tenant, qr.manager)
+```
+
+### Background Jobs
+
+Use the helper for safe execution:
+
+```typescript
+await tenantManager.runInTenantContext('tenant-id', async (em) => {
+  // Safe, isolated execution
+})
+```
+
 # volcanic-database-typeorm
 
 `@volcanicminds/typeorm` is a powerful utility library for TypeORM that dynamically translates HTTP query string parameters into complex pagination, sorting, and filtering queries. It offers a database-agnostic abstraction layer, enabling seamless operation with both SQL (e.g., PostgreSQL) and NoSQL (e.g., MongoDB) databases for most common use cases.

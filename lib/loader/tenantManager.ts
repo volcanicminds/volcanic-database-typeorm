@@ -26,11 +26,7 @@ export class TenantManager {
     // 3. Validation Logic (Strict)
     // Rule A: Header is MANDATORY in Multi-Tenant
     if (!headerTid) {
-      // Allow bypassing if explicitly configured (e.g. status check), but generally strict.
-      // For now, throw error as per original logic, or return null?
-      // Original Audithor logic returned null if no slug.
-      // Original TypeORM logic threw error.
-      // Let's stick to returning null to allow 404 handling by the caller, consistent with Audithor.
+      // Log debug and return null to let the caller handle 404/403
       if ((global as any).log?.d) (global as any).log.debug('[TenantManager] No tenant header found')
       return null
     }
@@ -39,21 +35,8 @@ export class TenantManager {
     // Rule C: Must Match (Security against Spoofing)
     if (jwtTid && headerTid) {
       if (jwtTid !== headerTid) {
-        // If System Admin (tid=system), they can impersonate, so this check might be too strict?
-        // But impersonation usually involves obtaining a token FOR the target tenant.
-        // If I am System Admin acting on Tenant X, my token should probably be issued for Tenant X (impersonated).
-        // If I use my System Admin token to access Tenant X header, that's cross-tenant access.
-        // Verification: "Verify System Admin can CRUD tenants" -> implies System Admin token used on global scope.
-        // When System Admin acts on `system` tenant, header is `system`.
-        // When System Admin impersonates, they get a new token.
-        // So strict match is correct for standard flow.
-        // Exception: core admin APIs might not strict match?
-        // Let's keep strict match for now, consistent with TypeORM original draft.
-        // But Audithor didn't have this check in resolveTenant.
-        // To avoid breaking existing flows, I will warn instead of throw, or skip for 'system' logic if needed.
-        // Actually, let's keep it safe: if you claim to be X in header but token says Y, it's fishy.
-        // UNLESS you are 'system' admin?
-        // Let's COMMENT OUT the throw for now to match Audithor behavior which was permissive/focused on Header.
+        // Warning: Mismatch between Token and Header.
+        // This is suspicious unless it's a System Admin impersonation flow.
         if ((global as any).log?.w)
           (global as any).log.warn(`[TenantManager] Mismatch: Token(${jwtTid}) vs Header(${headerTid})`)
       }
@@ -62,11 +45,12 @@ export class TenantManager {
     const tenantId = headerTid
 
     // 5. Database Lookup
-    const tenantRepo = this.dataSource.getRepository(Tenant)
+    const tenantRepo = this.dataSource.getRepository('Tenant')
+
     // Support lookup by ID or SLUG
-    const tenant = await tenantRepo.findOne({
-      where: [{ id: tenantId }, { slug: tenantId }]
-    })
+    const tenant = (await tenantRepo.findOne({
+      where: [{ slug: tenantId }]
+    })) as unknown as Tenant
 
     if (!tenant) {
       if ((global as any).log?.d) (global as any).log.debug(`[TenantManager] Tenant ${tenantId} not found in DB`)
@@ -81,6 +65,11 @@ export class TenantManager {
     return tenant
   }
 
+  /**
+   * Switches the database context to the specific tenant schema.
+   * CRITICAL SECURITY: This method MUST receive an EntityManager (db) when using Postgres Multi-Tenancy.
+   * Modifying the global search_path is strictly forbidden to prevent data leaks.
+   */
   async switchContext(tenant: Tenant, db?: EntityManager) {
     const driver = this.dataSource.driver.options.type
 
@@ -91,13 +80,16 @@ export class TenantManager {
       if (db) {
         if ((global as any).log?.t)
           (global as any).log.trace(`[TenantManager] Context-Aware Switch Schema to: ${safeSchema}`)
+        // Execute SET search_path only on the specific transactional QueryRunner
         await db.query(`SET search_path TO "${safeSchema}", public`)
       } else {
-        if ((global as any).log?.w)
-          (global as any).log.warn(
-            '[TenantManager] ⚠️ Switching Global Connection Pool Context! Use generic .use(req.db) pattern instead.'
-          )
-        await this.dataSource.query(`SET search_path TO "${safeSchema}", public`)
+        // STRICT SECURITY CHECK
+        // If no db (EntityManager) is provided, we used to fallback to global dataSource.
+        // This is now FORBIDDEN as it poisons the connection pool.
+        const errorMsg =
+          '[TenantManager] ⛔️ CRITICAL: Attempted UNSAFE global context switch without QueryRunner. This operation has been blocked to prevent data leaks.'
+        if ((global as any).log?.f) (global as any).log.fatal(errorMsg)
+        throw new Error(errorMsg)
       }
     } else if (driver === 'mongodb') {
       // Mongo implementation stub
@@ -108,9 +100,9 @@ export class TenantManager {
 
   async createTenant(data: any): Promise<void> {
     const driver = this.dataSource.driver.options.type
-    const repo = this.dataSource.getRepository(Tenant)
+    const repo = this.dataSource.getRepository('Tenant')
 
-    // Data validation should be handled by Schema validation in API, but double check here?
+    // Data validation should be handled by Schema validation in API
     // Enforce lowercase slug
     if (data.slug) data.slug = data.slug.toLowerCase()
 
@@ -136,8 +128,27 @@ export class TenantManager {
       const qr = this.dataSource.createQueryRunner()
       await qr.connect()
       try {
-        await qr.startTransaction()
         await qr.query(`CREATE SCHEMA IF NOT EXISTS "${safeSchema}"`)
+
+        // --- Schema Synchronization ---
+        // We create an ephemeral DataSource to force TypeORM to synchronize only the specific schema.
+        // This is necessary because the global DataSource is bound to the public/default schema.
+        if ((global as any).log?.i)
+          (global as any).log.info(`[TenantManager] Synchronizing tables for schema: ${safeSchema}`)
+
+        const tenantDs = new DataSource({
+          ...(this.dataSource.options as any),
+          schema: safeSchema,
+          synchronize: true,
+          name: `sync_${safeSchema}_${Date.now()}`
+        })
+        await tenantDs.initialize()
+        await tenantDs.destroy()
+
+        if ((global as any).log?.i)
+          (global as any).log.info(`[TenantManager] Schema ${safeSchema} synchronized successfully`)
+
+        await qr.startTransaction()
 
         // Context Switch within the same transaction to seed the user
         await qr.query(`SET search_path TO "${safeSchema}", public`)
@@ -162,12 +173,12 @@ export class TenantManager {
         if ((global as any).log?.i) (global as any).log.info(`[TenantManager] Created Schema & Admin: ${safeSchema}`)
       } catch (err) {
         await qr.rollbackTransaction()
-        // Optional: delete tenant record if schema creation fails
         throw err
       } finally {
         try {
+          // Reset to public for safety before releasing, although release usually cleans up
           await qr.query(`SET search_path TO public`)
-        } catch (e) {
+        } catch {
           // ignore
         }
         await qr.release()
@@ -179,23 +190,23 @@ export class TenantManager {
   }
 
   async deleteTenant(id: string): Promise<void> {
-    const repo = this.dataSource.getRepository(Tenant)
+    const repo = this.dataSource.getRepository('Tenant')
     await repo.softDelete(id)
   }
 
   async restoreTenant(id: string) {
-    const repo = this.dataSource.getRepository(Tenant)
+    const repo = this.dataSource.getRepository('Tenant')
     await repo.restore(id)
     return repo.findOneBy({ id })
   }
 
   async getTenant(id: string) {
-    const repo = this.dataSource.getRepository(Tenant)
-    return repo.findOneBy({ id })
+    const repo = this.dataSource.getRepository('Tenant')
+    return (await repo.findOneBy({ id })) as unknown as Tenant
   }
 
   async updateTenant(id: string, data: Partial<Tenant>) {
-    const repo = this.dataSource.getRepository(Tenant)
+    const repo = this.dataSource.getRepository('Tenant')
     // Exclude dbSchema from updates as it requires migration of tables
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { dbSchema: _ignore, ...updateData } = data
@@ -204,7 +215,31 @@ export class TenantManager {
   }
 
   async listTenants() {
-    const repo = this.dataSource.getRepository(Tenant)
+    const repo = this.dataSource.getRepository('Tenant')
     return repo.find({ order: { createdAt: 'DESC' } as any })
+  }
+
+  /**
+   * Safe utility to execute a function within a specific Tenant Context (e.g. for Background Jobs or System Admin tasks).
+   * This handles the creation, connection, context switch, and release of a QueryRunner automatically.
+   */
+  async runInTenantContext<T>(tenantId: string, callback: (em: EntityManager) => Promise<T>): Promise<T> {
+    const tenant = await this.getTenant(tenantId)
+    if (!tenant) throw new Error(`Tenant ${tenantId} not found`)
+    if (tenant.status !== 'active') throw new Error(`Tenant ${tenantId} is not active`)
+
+    const qr = this.dataSource.createQueryRunner()
+    await qr.connect()
+
+    try {
+      // Enforce context switch on this specific runner
+      await this.switchContext(tenant, qr.manager)
+
+      // Execute callback with the isolated EntityManager
+      const result = await callback(qr.manager)
+      return result
+    } finally {
+      await qr.release()
+    }
   }
 }

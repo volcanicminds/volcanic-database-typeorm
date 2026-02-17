@@ -198,6 +198,8 @@ export async function retrieveUserByPassword(email: string, password: string, ru
     throw new ServiceError('Invalid parameters', 400)
   }
   try {
+    const result = await runner?.query(`SHOW search_path`)
+    console.log(result)
     const user = await getUserRepo(runner).findOneBy({ email: email })
     if (!user) {
       throw new Error('Wrong credentials')
