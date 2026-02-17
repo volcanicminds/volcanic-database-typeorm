@@ -98,7 +98,7 @@ export class TenantManager {
     }
   }
 
-  async createTenant(data: any): Promise<void> {
+  async createTenant(data: any): Promise<Tenant> {
     const driver = this.dataSource.driver.options.type
     const repo = this.dataSource.getRepository('Tenant')
 
@@ -118,7 +118,7 @@ export class TenantManager {
       ...data,
       status: 'active'
     })
-    await repo.save(tenant)
+    const savedTenant = (await repo.save(tenant)) as any as Tenant
 
     if (driver === 'postgres') {
       const schema = data.dbSchema
@@ -187,6 +187,8 @@ export class TenantManager {
       // Mongo or others
       if ((global as any).log?.i) (global as any).log.info(`[TenantManager] Created Tenant Record for ${driver}`)
     }
+
+    return savedTenant
   }
 
   async deleteTenant(id: string): Promise<void> {
