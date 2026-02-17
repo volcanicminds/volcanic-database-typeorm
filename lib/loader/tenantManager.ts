@@ -151,7 +151,8 @@ export class TenantManager {
         await qr.startTransaction()
 
         // Context Switch within the same transaction to seed the user
-        await qr.query(`SET search_path TO "${safeSchema}", public`)
+        // Use SET LOCAL so it automatically reverts at the end of the transaction
+        await qr.query(`SET LOCAL search_path TO "${safeSchema}", public`)
 
         if (data.adminEmail && data.adminPassword) {
           if ((global as any).log?.i) (global as any).log.info(`[TenantManager] Seeding Admin User: ${data.adminEmail}`)
@@ -172,14 +173,17 @@ export class TenantManager {
         await qr.commitTransaction()
         if ((global as any).log?.i) (global as any).log.info(`[TenantManager] Created Schema & Admin: ${safeSchema}`)
       } catch (err) {
-        await qr.rollbackTransaction()
+        if (qr.isTransactionActive) {
+          await qr.rollbackTransaction()
+        }
         throw err
       } finally {
         try {
-          // Reset to public for safety before releasing, although release usually cleans up
+          // Reset to public for safety before releasing
           await qr.query(`SET search_path TO public`)
-        } catch {
-          // ignore
+        } catch (cleanupErr) {
+          if ((global as any).log?.e)
+            (global as any).log.error(`[TenantManager] Failed to reset search_path: ${cleanupErr}`)
         }
         await qr.release()
       }
@@ -241,6 +245,12 @@ export class TenantManager {
       const result = await callback(qr.manager)
       return result
     } finally {
+      try {
+        await qr.query('SET search_path TO public')
+      } catch (e) {
+        if ((global as any).log?.w)
+          (global as any).log.warn(`[TenantManager] Failed to reset search_path context: ${e}`)
+      }
       await qr.release()
     }
   }
