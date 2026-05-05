@@ -85,7 +85,9 @@ This allows you to build flexible and powerful data APIs with minimal boilerplat
 
 ### Configuration (Optional)
 
-You can customize the list of sensitive fields that should be blocked from filtering during the initialization.
+You can customize the list of sensitive fields that should be blocked from filtering, as well as configure various environment variables.
+
+For a full list of configuration options and environment variables, please refer to [docs/configuration.md](docs/configuration.md).
 
 ```typescript
 import { start } from '@volcanicminds/typeorm'
@@ -98,6 +100,7 @@ await start({
 ```
 
 Default sensitive fields are: `['password', 'mfaSecret', 'resetPasswordToken', 'confirmationToken']`.
+
 
 ### Use Case 1: Integrated with `@volcanicminds/backend`
 

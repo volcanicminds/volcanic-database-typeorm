@@ -1,0 +1,24 @@
+# @volcanicminds/typeorm AI Context
+
+## Project Purpose
+A TypeScript library bridging HTTP query strings and TypeORM query objects for `@volcanicminds/backend` or standalone use. It provides advanced dynamic filtering, sorting, pagination, and boolean logic out-of-the-box.
+
+## Tech Stack
+- **TypeScript**
+- **TypeORM** (Core dependency)
+- **Node.js** (Target >= 24)
+
+## Codebase Structure
+- `index.ts`: Entry point. Handles Database initialization (`start()`) and global scope bindings (e.g., `global.repository`). Contains the fail-fast proxy mechanism restricting direct global repository access to enforce context-aware services.
+- `lib/query.ts`: Core query translation engine. Exposes `applyQuery`, `useWhere`, `useOrder`, `executeFindQuery`, etc. Contains the `reservedOperators` map and prototype-pollution risk safeguards (`hasProtoRisk`).
+- `lib/query/parser.ts`: Parses the `_logic` HTTP query string parameter into an AST.
+- `lib/query/builder.ts`: Builds TypeORM `where` objects from the parsed logic AST.
+- `lib/loader/*`: Logic for auto-loading entities, repositories, and setting up multi-tenant DB connections.
+- `lib/entities/*`: Base framework entities (User, Tenant, Token, Change).
+
+## Core Paradigms & Constraints
+- **Security First**: `hasProtoRisk` validates all incoming keys against prototype pollution. Invalid identifiers are rejected.
+- **Sensitive Fields**: Filter fields matching `sensitiveFields` (e.g., `password`) are automatically blocked to prevent info leaks.
+- **Operator Mapping**: URLs use syntax like `field:operator=value` (e.g., `status:eq=active`). Supported operators map to TypeORM equivalents (e.g., `:eq` -> `Equal()`, `:gt` -> `MoreThan()`).
+- **Raw SQL Restriction**: The `:raw` operator is extremely dangerous and blocked by default unless the `VOLCANIC_CUSTOM_QUERY_OPERATORS` env var is explicitly true.
+- **Global Repo Proxy**: `global.repository.X` access throws a FATAL error in `index.ts` to enforce Context-Aware Service patterns (e.g. `service.use(req.db)`).
