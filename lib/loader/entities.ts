@@ -21,10 +21,14 @@ export async function load() {
   for (const pattern of patterns) {
     const files = globSync(pattern, { nodir: true, windowsPathsNoEscape: true })
 
-    for (const f of files) {
-      const fileUrl = pathToFileURL(f).href
-      const entityModule = await import(fileUrl)
+    const modules = await Promise.all(
+      files.map((f) => {
+        const fileUrl = pathToFileURL(f).href
+        return import(fileUrl)
+      })
+    )
 
+    for (const entityModule of modules) {
       const entityClass = entityModule.default || entityModule
       const entityNames = Object.keys(entityClass)
 
