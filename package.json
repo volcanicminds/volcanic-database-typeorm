@@ -36,6 +36,7 @@
     "lint:fix": "eslint . --fix",
     "type-check": "tsc --noEmit",
     "check-all": "npm run lint && npm run type-check",
+    "test": "cross-env NODE_ENV=memory MFA_DB_SECRET=unit-test-secret-please-change-32xyz mocha --import=tsx ./test/**/*.spec.ts -t 20000 --exit",
     "combine": "node combine.js"
   },
   "dependencies": {
@@ -48,9 +49,13 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^25.0.3",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.2",
+    "expect": "^30.2.0",
     "globals": "^16.5.0",
+    "mocha": "^11.7.5",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.50.0"
