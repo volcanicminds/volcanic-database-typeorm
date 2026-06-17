@@ -214,20 +214,20 @@ export async function retrieveUserByExternalId(externalId: string, runner?: Quer
   }
 }
 
+// Constant-cost bcrypt hash (cost 12, matching createUser) compared against when
+// the user does not exist, so response time is the same whether or not the email
+// is registered. Prevents user enumeration via timing. The plaintext is irrelevant.
+const DUMMY_PASSWORD_HASH = '$2b$12$4sLKI6Ag4n6KjUBPqA4oJuAthEdYgbwUj7oIR8yj7IekjUCzUFRD2'
+
 export async function retrieveUserByPassword(email: string, password: string, runner?: QueryRunner) {
   if (!email || !password) {
     throw new ServiceError('Invalid parameters', 400)
   }
-  try {
-    const user = await getUserRepo(runner).findOneBy({ email: email })
-    if (!user) {
-      throw new Error('Wrong credentials')
-    }
-    const match = await bcrypt.compare(password, user.password)
-    return match ? user : null
-  } catch (error) {
-    throw error
-  }
+  const user = await getUserRepo(runner).findOneBy({ email: email })
+  // Always run a bcrypt comparison (against a dummy hash when the user is missing)
+  // to keep the timing constant and avoid leaking whether the email exists.
+  const match = await bcrypt.compare(password, user?.password || DUMMY_PASSWORD_HASH)
+  return user && match ? user : null
 }
 
 export async function changePassword(email: string, password: string, oldPassword: string, runner?: QueryRunner) {
