@@ -237,8 +237,10 @@ export async function changePassword(email: string, password: string, oldPasswor
   try {
     const repo = getUserRepo(runner)
     const user = await repo.findOneBy({ email: email })
-    const match = await bcrypt.compare(oldPassword, user.password)
-    if (match) {
+    // Guard the null deref (user not found) and keep the bcrypt cost constant
+    // regardless of existence, mirroring retrieveUserByPassword.
+    const match = await bcrypt.compare(oldPassword, user?.password || DUMMY_PASSWORD_HASH)
+    if (user && match) {
       const salt = await bcrypt.genSalt(12)
       const hashedPassword = await bcrypt.hash(password, salt)
       return repo.save({ ...user, passwordChangedAt: new Date(), password: hashedPassword })
@@ -324,7 +326,9 @@ export function isPasswordToBeChanged(user: typeof global.entity.User) {
         throw new Error('PASSWORD_EXPIRATION_DAYS_ENV_INVALID')
       }
     } catch (e) {
-      throw new Error(e)
+      // `e` is already an Error; rethrow it as-is. `new Error(e)` stringified the
+      // Error into a useless "[object …]" / doubly-wrapped message.
+      throw e
     }
     const { passwordChangedAt } = user
     const date1 = new Date(passwordChangedAt)
