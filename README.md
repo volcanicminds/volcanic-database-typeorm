@@ -2,6 +2,27 @@
 [![opensource](https://img.shields.io/badge/open-source-blue)](https://en.wikipedia.org/wiki/Open_source)
 [![volcanic-typeorm](https://img.shields.io/badge/volcanic-minds-orange)](https://github.com/volcanicminds/volcanic-typeorm)
 [![npm](https://img.shields.io/badge/package-npm-white)](https://www.npmjs.com/package/@volcanicminds/typeorm)
+[![status](https://img.shields.io/badge/status-DEPRECATED-red)](https://github.com/volcanicminds/volcanic-backend)
+
+> # ⚠️ DEPRECATED — No longer maintained
+>
+> **`@volcanicminds/typeorm` is deprecated and will not receive further updates or security fixes.**
+> Its data layer (Magic Query + multi-tenant) has been **merged into `@volcanicminds/backend` (v3+)** and is
+> now exposed as the internal subpath **`@volcanicminds/backend/typeorm`**.
+>
+> **Migrate:**
+>
+> ```diff
+> - import { start, executeFindQuery } from '@volcanicminds/typeorm'
+> + import { start, executeFindQuery } from '@volcanicminds/backend/typeorm'
+> ```
+>
+> Install the data-layer **peer dependencies** in your app: `npm install typeorm bcrypt pluralize reflect-metadata pg`.
+>
+> See **[volcanicminds/volcanic-backend](https://github.com/volcanicminds/volcanic-backend)** — `README.md`
+> ("Database (data layer)" section) and `llms.txt` (Part 3) for the up-to-date documentation.
+>
+> The content below is retained for historical reference only.
 
 # Volcanic Database TypeORM
 
